@@ -2,7 +2,6 @@ import rawCpus from '../assets/data/cpu.json';
 import rawMobos from '../assets/data/motherboard.json';
 import rawRams from '../assets/data/memory.json';
 import rawGpus from '../assets/data/video-card.json';
-import rawDrives from '../assets/data/internal-hard-drive.json';
 
 const STORAGE_KEY = 'pc_compatibility_catalog';
 
@@ -127,9 +126,9 @@ const parseSocket = (name, rawSocket) => {
   return 'AM5';
 };
 
-// Нормализация всех типов данных
+// Data Type normalization
 const normalizeData = () => {
-  // 1. Процессоры (30 шт)
+  // 1. Processors
   const cpus = rawCpus.slice(0, 30).map((item, index) => ({
     id: `cpu-${index + 1}`,
     name: item.name,
@@ -142,12 +141,12 @@ const normalizeData = () => {
     graphics: item.graphics || 'None'
   }));
 
-  // 2. Материнские платы (30 шт)
+  // 2. Motherboards
   const mobos = rawMobos.slice(0, 30).map((item, index) => {
     const socket = parseSocket(item.name, item.socket);
     const upperName = item.name.toUpperCase();
 
-    // Определение типа памяти (DDR4 или DDR5)
+    // DDR5 or DDR4
     let ramType = 'DDR5';
     if (
       socket === 'AM4' ||
@@ -173,7 +172,7 @@ const normalizeData = () => {
     };
   });
 
-  // 3. Оперативная память (30 шт)
+  // RAM
   const rams = rawRams.slice(0, 30).map((item, index) => {
     const isDdr5 =
       (Array.isArray(item.speed) && item.speed[0] === 5) ||
@@ -194,7 +193,7 @@ const normalizeData = () => {
     };
   });
 
-  // 4. Видеокарты (25 шт)
+  // GPU
   const parseGpuTdp = (chipset, rawTdp) => {
   if (rawTdp) return rawTdp;
   const upper = (chipset || '').toUpperCase();
@@ -224,10 +223,10 @@ const normalizeData = () => {
   return 200;
 };
 
-// Внутри normalizeData() заменяем парсинг видеокарт:
+// GPU parsing
 const gpus = rawGpus.slice(0, 30).map((item, index) => {
   const chipset = item.chipset || '';
-  // Если в названии еще нет имени чипа (например, "Asus PRIME OC"), добавляем чипсет спереди
+  // If the chipset is not explicitly mentioned, we can try to extract it from the name
   const fullName = item.name.toLowerCase().includes(chipset.toLowerCase())
     ? item.name
     : `${chipset} ${item.name}`.trim();
@@ -242,19 +241,11 @@ const gpus = rawGpus.slice(0, 30).map((item, index) => {
   };
 });
 
-  // 5. Накопители (15 шт)
-  const drives = rawDrives.slice(0, 15).map((item, index) => ({
-    id: `drive-${index + 1}`,
-    name: item.name,
-    category: 'Storage',
-    capacity: item.capacity || '1 TB',
-    type: item.type || 'SSD'
-  }));
 
-  return [...cpus, ...mobos, ...rams, ...gpus, ...drives];
+  return [...cpus, ...mobos, ...rams, ...gpus];
 };
 
-// Чтение из LocalStorage
+// Reading from LocalStorage or initializing if empty
 const getStoredData = () => {
   const localData = localStorage.getItem(STORAGE_KEY);
   if (!localData) {
@@ -265,7 +256,7 @@ const getStoredData = () => {
   return JSON.parse(localData);
 };
 
-// Имитация асинхронного API
+// async API simulation
 export const fetchComponents = () => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
