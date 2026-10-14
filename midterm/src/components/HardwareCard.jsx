@@ -1,18 +1,18 @@
 import React from 'react';
 
-// Функция получения цвета категории
+// Category Color
 const getBadgeColor = (category) => {
   switch (category) {
     case 'CPU':
-      return '#ef4444'; // Красный
+      return '#ef4444';
     case 'Motherboard':
-      return '#10b981'; // Зеленый
+      return '#10b981';
     case 'Memory':
-      return '#f59e0b'; // Оранжевый
+      return '#f59e0b';
     case 'Video Card':
-      return '#8b5cf6'; // Фиолетовый
+      return '#8b5cf6';
     default:
-      return '#6b7280'; // Серый
+      return '#6b7280';
   }
 };
 

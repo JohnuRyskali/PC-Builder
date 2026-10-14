@@ -7,10 +7,10 @@ export function BuildSummary({ build, onRemove, onClear }) {
   const ram = build['Memory'] || build['RAM'] || build['ram'];
   const gpu = build['Video Card'] || build['GPU'] || build['gpu'];
 
-  // 1. Подсчет суммарного TDP + запас 50W
+  // Total TDP
   const totalTdp = (cpu?.tdp || 0) + (gpu?.tdp || 0) + 50;
 
-  // 2. Движок проверки ошибок и предупреждений
+  // Error Checks
   const getCompatibilityReport = () => {
     const errors = [];
     const warnings = [];
@@ -40,6 +40,35 @@ export function BuildSummary({ build, onRemove, onClear }) {
 
   const statusBorderColor = errors.length > 0 ? '#dc3545' : isCompatible ? '#28a745' : '#ffc107';
 
+  const renderSpecs = (type, item) => {
+    if (!item) return null;
+
+    switch (type) {
+      case 'Motherboard':
+        return (
+          <div style={styles.specBox}>
+            <div>Socket: {item.socket || 'N/A'}</div>
+            <div>Memory Type: {item.ram_type || 'N/A'}</div>
+          </div>
+        );
+      case 'RAM':
+        return (
+          <div style={styles.specBox}>
+            <div>Memory Type: {item.ram_type || 'N/A'}</div>
+          </div>
+        );
+      case 'GPU':
+        return (
+          <div style={styles.specBox}>
+            <div>TDP: {item.tdp ? `${item.tdp} W` : 'N/A'}</div>
+            <div>VRAM: {item.vram ? `${item.vram} GB` : 'N/A'}</div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div style={{
       backgroundColor: '#1e1e1e',
@@ -57,27 +86,28 @@ export function BuildSummary({ build, onRemove, onClear }) {
         borderBottom: '1px solid #333',
         paddingBottom: '8px',
         fontSize: '20px',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        color: '#fff'
       }}>
         ⚙️ PC Build & Compatibility Status
       </h2>
 
-      {/* ЖЕСТКАЯ СЕТКА В 4 КОЛОНКИ */}
+      {}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)', // Ровно 4 карточки в один ряд
+        gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '10px',
         marginBottom: '12px'
       }}>
         {[
-          { label: 'CPU', item: cpu, key: 'CPU' },
-          { label: 'Motherboard', item: motherboard, key: 'Motherboard' },
-          { label: 'RAM', item: ram, key: 'Memory' },
-          { label: 'GPU', item: gpu, key: 'Video Card' }
-        ].map(({ label, item, key }) => (
+          { label: 'CPU', item: cpu, key: 'CPU', type: 'CPU' },
+          { label: 'Motherboard', item: motherboard, key: 'Motherboard', type: 'Motherboard' },
+          { label: 'RAM', item: ram, key: 'Memory', type: 'RAM' },
+          { label: 'GPU', item: gpu, key: 'Video Card', type: 'GPU' }
+        ].map(({ label, item, key, type }) => (
           <div key={key} style={{
             backgroundColor: '#2a2a2a',
-            padding: '10px 6px',
+            padding: '10px 8px',
             borderRadius: '6px',
             borderStyle: item ? 'solid' : 'dashed',
             borderWidth: '1px',
@@ -85,10 +115,11 @@ export function BuildSummary({ build, onRemove, onClear }) {
             textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            minWidth: 0, // Предотвращает переполнение контейнера длинным текстом
-            minHeight: '115px'
+            minWidth: 0, 
+            height: '160px',
+            boxSizing: 'border-box'
           }}>
             <div style={{ fontSize: '11px', color: '#888', fontWeight: 'bold' }}>
               {label}
@@ -97,20 +128,23 @@ export function BuildSummary({ build, onRemove, onClear }) {
             <div style={{
               fontSize: '12px',
               fontWeight: '500',
-              margin: '4px 0',
+              margin: '2px 0',
               color: item ? '#fff' : '#666',
               wordBreak: 'break-word',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
-              WebkitLineClamp: 2,
+              WebkitLineClamp: 2, // Ограничение ровно в 2 строки
               WebkitBoxOrient: 'vertical',
               lineHeight: '1.2'
             }}>
               {item ? item.name : 'Empty Slot'}
             </div>
 
-            {item && (
+            {/* Динамические спецификации */}
+            {renderSpecs(type, item)}
+
+            {item ? (
               <button
                 onClick={() => onRemove(key)}
                 style={{
@@ -120,11 +154,14 @@ export function BuildSummary({ build, onRemove, onClear }) {
                   color: '#fff',
                   borderStyle: 'none',
                   borderRadius: '3px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
                 }}
               >
                 Remove
               </button>
+            ) : (
+              <div style={{ height: '22px' }} />
             )}
           </div>
         ))}
@@ -151,7 +188,7 @@ export function BuildSummary({ build, onRemove, onClear }) {
         </div>
       )}
 
-      {/* Панель статуса */}
+      {/* Status Panel */}
       <div style={{
         padding: '12px 16px',
         borderRadius: '6px',
@@ -160,7 +197,7 @@ export function BuildSummary({ build, onRemove, onClear }) {
         borderWidth: '1px',
         borderColor: statusBorderColor
       }}>
-        <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '6px', textAlign: 'center' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '6px', textAlign: 'center', color: '#fff' }}>
           {errors.length > 0 && '🔴 Compatibility Issues Found!'}
           {isCompatible && '🟢 All Selected Components Are Fully Compatible!'}
           {!isCompatible && errors.length === 0 && '⚠️ Build Incomplete'}
@@ -183,12 +220,26 @@ export function BuildSummary({ build, onRemove, onClear }) {
           fontSize: '13px',
           borderTop: '1px solid rgba(255,255,255,0.1)',
           paddingTop: '8px',
-          textAlign: 'center'
+          textAlign: 'center',
+          color: '#ccc'
         }}>
           ⚡ Estimated Power Consumption: <strong>{totalTdp} W</strong>
-          {totalTdp > 50 && ` (Recommended PSU: ${Math.ceil((totalTdp + 100) / 50) * 50} W)`}
+          {totalTdp > 50 && ` (Recommended PSU: ${Math.ceil((totalTdp * 1.85) / 50) * 50} W)`}
         </div>
       </div>
     </div>
   );
 }
+
+const styles = {
+  specBox: {
+    fontSize: '10px',
+    color: '#aaa',
+    backgroundColor: '#1c1c1c',
+    padding: '3px 4px',
+    borderRadius: '4px',
+    width: '100%',
+    boxSizing: 'border-box',
+    lineHeight: '1.3'
+  }
+};

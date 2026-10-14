@@ -14,6 +14,7 @@ const categoryOrder = {
 };
 
 const STORAGE_KEY = 'pc_builder_current_build';
+const CUSTOM_ITEMS_STORAGE_KEY = 'pc_builder_custom_components'; // Ключ для кастомных деталей
 const ITEMS_PER_PAGE = 12;
 
 export function App() {
@@ -22,13 +23,10 @@ export function App() {
   const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Состояние для пагинации
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Состояние для управления модальным окном добавления компонента
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
 
-  // Инициализация состояния сборки из localStorage
+  // localStorage initialization
   const [build, setBuild] = useState(() => {
     try {
       const savedBuild = localStorage.getItem(STORAGE_KEY);
@@ -50,7 +48,7 @@ export function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('name-asc');
 
-  // Сохранение сборки в localStorage
+  // Saving to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
@@ -59,8 +57,8 @@ export function App() {
     }
   }, [build]);
 
-  // Загрузка каталога с функцией очистки (Cleanup)
-  useEffect(() => {
+  // Загрузка каталога с API + объединение с кастомными из localStorage
+useEffect(() => {
     let ignore = false;
     setLoading(true);
     setError(null);
@@ -68,8 +66,27 @@ export function App() {
     fetchComponents()
       .then((data) => {
         if (!ignore) {
-          const filteredData = data.filter((item) => item.category !== 'Storage');
-          setComponents(filteredData);
+          const apiFiltered = data.filter((item) => item.category !== 'Storage');
+          
+          let customItems = [];
+          try {
+            const savedCustom = localStorage.getItem(CUSTOM_ITEMS_STORAGE_KEY);
+            if (savedCustom) {
+              customItems = JSON.parse(savedCustom);
+            }
+          } catch (e) {
+            console.error('Failed to load custom items from localStorage:', e);
+          }
+
+          const uniqueMap = new Map();
+          
+          [...customItems, ...apiFiltered].forEach((item) => {
+            if (item && item.id) {
+              uniqueMap.set(item.id, item);
+            }
+          });
+
+          setComponents(Array.from(uniqueMap.values()));
           setLoading(false);
         }
       })
@@ -85,7 +102,7 @@ export function App() {
     };
   }, []);
 
-  // Сброс на 1-ю страницу при изменении фильтрации или поиска
+  // Pagination reset
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, sortBy]);
@@ -120,12 +137,32 @@ export function App() {
     });
   };
 
-  // Добавление нового компонента через форму
+  // new comp w save in localStorage
   const handleAddNewComponent = (newComponent) => {
-    setComponents((prev) => [newComponent, ...prev]);
+    setComponents((prev) => {
+      if (prev.some((item) => item.id === newComponent.id)) {
+        return prev;
+      }
+
+      const updatedComponents = [newComponent, ...prev];
+      
+      try {
+        const savedCustom = localStorage.getItem(CUSTOM_ITEMS_STORAGE_KEY);
+        const currentCustom = savedCustom ? JSON.parse(savedCustom) : [];
+        
+        if (!currentCustom.some((item) => item.id === newComponent.id)) {
+          const updatedCustom = [newComponent, ...currentCustom];
+          localStorage.setItem(CUSTOM_ITEMS_STORAGE_KEY, JSON.stringify(updatedCustom));
+        }
+      } catch (e) {
+        console.error('Failed to save custom item to localStorage:', e);
+      }
+
+      return updatedComponents;
+    });
   };
 
-  // Фильтрация и сортировка
+  // Filtering, Sorting
   const filteredComponents = components
     .filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -148,7 +185,6 @@ export function App() {
       return 0;
     });
 
-  // Логика пагинации
   const totalPages = Math.ceil(filteredComponents.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedComponents = filteredComponents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -173,7 +209,6 @@ export function App() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto', color: '#fff' }}>
-      {/* Шапка с заголовком и кнопкой */}
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -217,7 +252,6 @@ export function App() {
         onSortChange={setSortBy}
       />
 
-      {/* Отработка Empty State */}
       {paginatedComponents.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
           No components found matching your criteria.
@@ -235,7 +269,6 @@ export function App() {
         </div>
       )}
 
-      {/* Панель пагинации */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
           <button
@@ -274,14 +307,12 @@ export function App() {
         </div>
       )}
 
-      {/* Модальное окно деталей */}
       <HardwareDetailModal
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
         onAddToBuild={handleAddToBuild}
       />
 
-      {/* Модальное окно формы добавления */}
       {isAddFormOpen && (
         <AddHardwareForm
           onClose={() => setIsAddFormOpen(false)}
