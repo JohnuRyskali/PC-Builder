@@ -257,7 +257,7 @@ useEffect(() => {
           No components found matching your criteria.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {paginatedComponents.map((item) => (
             <HardwareCard
               key={item.id}
