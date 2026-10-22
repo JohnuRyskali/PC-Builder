@@ -14,7 +14,7 @@ const categoryOrder = {
 };
 
 const STORAGE_KEY = 'pc_builder_current_build';
-const CUSTOM_ITEMS_STORAGE_KEY = 'pc_builder_custom_components'; // Ключ для кастомных деталей
+const CUSTOM_ITEMS_STORAGE_KEY = 'pc_builder_custom_components';
 const ITEMS_PER_PAGE = 12;
 
 export function App() {
