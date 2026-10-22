@@ -1,7 +1,6 @@
 import React from 'react';
 
 export function BuildSummary({ build, onRemove, onClear }) {
-  // Достаем компоненты по точным ключам
   const cpu = build['CPU'] || build['cpu'];
   const motherboard = build['Motherboard'] || build['motherboard'];
   const ram = build['Memory'] || build['RAM'] || build['ram'];

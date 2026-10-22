@@ -43,7 +43,7 @@ export const HardwareCard = ({ item, onAddToBuild, onSelect }) => {
         <button 
           style={styles.addBtn} 
           onClick={(e) => {
-            e.stopPropagation(); // Предотвращаем всплытие события
+            e.stopPropagation();
             onAddToBuild(item);
           }}
         >

@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Вырезали Storage
 const categories = ['All', 'CPU', 'Motherboard', 'Memory', 'Video Card'];
 
 export const FilterBar = ({
