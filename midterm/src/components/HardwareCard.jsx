@@ -25,6 +25,10 @@ export const HardwareCard = ({ item, onAddToBuild, onSelect }) => {
         <span style={{ ...styles.badge, backgroundColor: badgeColor }}>
           {item.category}
         </span>
+        {/* Отображение цены в правом верхнем углу карточки */}
+        <span style={styles.price}>
+          {item.price ? `$${item.price}` : 'N/A'}
+        </span>
       </div>
 
       <h3 style={styles.title}>{item.name}</h3>
@@ -61,12 +65,15 @@ const styles = {
     padding: '16px',
     display: 'flex',
     flexDirection: 'column',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     borderStyle: 'solid',
     borderWidth: '1px',
     borderColor: '#2d2d35'
   },
   header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: '8px'
   },
   badge: {
@@ -77,6 +84,11 @@ const styles = {
     borderRadius: '4px',
     textTransform: 'uppercase',
     display: 'inline-block'
+  },
+  price: {
+    color: '#34d399',
+    fontSize: '16px',
+    fontWeight: 'bold'
   },
   title: {
     fontSize: '15px',
@@ -112,8 +124,6 @@ const styles = {
     padding: '8px',
     borderRadius: '6px',
     borderStyle: 'none',
-    borderWidth: '0px',
-    borderColor: 'transparent',
     backgroundColor: '#2563eb',
     color: '#fff',
     fontWeight: 'bold',

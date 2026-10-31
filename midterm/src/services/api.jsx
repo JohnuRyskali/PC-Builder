@@ -138,7 +138,8 @@ const normalizeData = () => {
     tdp: item.tdp || 65,
     core_count: item.core_count || 6,
     core_clock: item.core_clock || 3.5,
-    graphics: item.graphics || 'None'
+    graphics: item.graphics || 'None',
+    price: item.price || 250 // <--- Добавили цену (берется из JSON или ставится дефолт)
   }));
 
   // 2. Motherboards
@@ -146,7 +147,6 @@ const normalizeData = () => {
     const socket = parseSocket(item.name, item.socket);
     const upperName = item.name.toUpperCase();
 
-    // DDR5 or DDR4
     let ramType = 'DDR5';
     if (
       socket === 'AM4' ||
@@ -168,7 +168,8 @@ const normalizeData = () => {
       brand: item.name.split(' ')[0],
       socket: socket,
       ram_type: ramType,
-      form_factor: item.form_factor || 'ATX'
+      form_factor: item.form_factor || 'ATX',
+      price: item.price || 150 // <--- Добавили цену
     };
   });
 
@@ -189,58 +190,53 @@ const normalizeData = () => {
       category: 'Memory',
       speed: speedMHz ? `${speedMHz} MHz` : '3200 MHz',
       modules: modulesText || '2x16GB',
-      ram_type: isDdr5 ? 'DDR5' : 'DDR4'
+      ram_type: isDdr5 ? 'DDR5' : 'DDR4',
+      price: item.price || 90 // <--- Добавили цену
     };
   });
 
   // GPU
   const parseGpuTdp = (chipset, rawTdp) => {
-  if (rawTdp) return rawTdp;
-  const upper = (chipset || '').toUpperCase();
+    if (rawTdp) return rawTdp;
+    const upper = (chipset || '').toUpperCase();
 
-  // RTX 40xx / 30xx / RX 7000 / 6000 серии
-  if (upper.includes('4090')) return 450;
-  if (upper.includes('4080')) return 320;
-  if (upper.includes('4070 TI')) return 285;
-  if (upper.includes('4070')) return 200;
-  if (upper.includes('4060 TI')) return 160;
-  if (upper.includes('4060')) return 115;
+    if (upper.includes('4090')) return 450;
+    if (upper.includes('4080')) return 320;
+    if (upper.includes('4070 TI')) return 285;
+    if (upper.includes('4070')) return 200;
+    if (upper.includes('4060 TI')) return 160;
+    if (upper.includes('4060')) return 115;
+    if (upper.includes('3090')) return 350;
+    if (upper.includes('3080')) return 320;
+    if (upper.includes('3070')) return 220;
+    if (upper.includes('3060')) return 170;
+    if (upper.includes('7900 XTX')) return 355;
+    if (upper.includes('7900 XT')) return 315;
+    if (upper.includes('7800 XT')) return 263;
+    if (upper.includes('7700 XT')) return 245;
+    if (upper.includes('7600')) return 165;
+    if (upper.includes('A770')) return 225;
+    if (upper.includes('A750')) return 225;
 
-  if (upper.includes('3090')) return 350;
-  if (upper.includes('3080')) return 320;
-  if (upper.includes('3070')) return 220;
-  if (upper.includes('3060')) return 170;
-
-  if (upper.includes('7900 XTX')) return 355;
-  if (upper.includes('7900 XT')) return 315;
-  if (upper.includes('7800 XT')) return 263;
-  if (upper.includes('7700 XT')) return 245;
-  if (upper.includes('7600')) return 165;
-
-  if (upper.includes('A770')) return 225;
-  if (upper.includes('A750')) return 225;
-
-  return 200;
-};
-
-// GPU parsing
-const gpus = rawGpus.slice(0, 30).map((item, index) => {
-  const chipset = item.chipset || '';
-  // If the chipset is not explicitly mentioned, we can try to extract it from the name
-  const fullName = item.name.toLowerCase().includes(chipset.toLowerCase())
-    ? item.name
-    : `${chipset} ${item.name}`.trim();
-
-  return {
-    id: `gpu-${index + 1}`,
-    name: fullName,
-    category: 'Video Card',
-    chipset: chipset || 'NVIDIA / AMD',
-    vram: item.memory || 8,
-    tdp: parseGpuTdp(chipset || item.name, item.tdp)
+    return 200;
   };
-});
 
+  const gpus = rawGpus.slice(0, 30).map((item, index) => {
+    const chipset = item.chipset || '';
+    const fullName = item.name.toLowerCase().includes(chipset.toLowerCase())
+      ? item.name
+      : `${chipset} ${item.name}`.trim();
+
+    return {
+      id: `gpu-${index + 1}`,
+      name: fullName,
+      category: 'Video Card',
+      chipset: chipset || 'NVIDIA / AMD',
+      vram: item.memory || 8,
+      tdp: parseGpuTdp(chipset || item.name, item.tdp),
+      price: item.price || 500 // <--- Добавили цену
+    };
+  });
 
   return [...cpus, ...mobos, ...rams, ...gpus];
 };

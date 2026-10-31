@@ -26,6 +26,14 @@ export const HardwareDetailModal = ({ item, onClose, onAddToBuild }) => {
         <h2 style={styles.title}>{item.name}</h2>
 
         <div style={styles.specsGrid}>
+          {/* Вывод цены в модалке */}
+          <div style={styles.specItem}>
+            <span style={styles.specLabel}>Price</span>
+            <span style={{ ...styles.specValue, color: '#34d399', fontWeight: 'bold' }}>
+              {item.price ? `$${item.price}` : 'N/A'}
+            </span>
+          </div>
+
           {item.socket && (
             <div style={styles.specItem}>
               <span style={styles.specLabel}>Socket</span>
@@ -129,7 +137,7 @@ const styles = {
   },
   header: {
     display: 'flex',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '12px'
   },
@@ -179,7 +187,7 @@ const styles = {
   actions: {
     display: 'flex',
     gap: '12px',
-    justify: 'flex-end'
+    justifyContent: 'flex-end'
   },
   secondaryBtn: {
     padding: '10px 16px',
