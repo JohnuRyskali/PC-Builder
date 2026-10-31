@@ -197,6 +197,14 @@ useEffect(() => {
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
+      // 1. Сначала отрабатывает сортировка — перемешивает разные категории по общей цене/имени/TDP
+      if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
+      if (sortBy === 'price-asc') return (a.price || 0) - (b.price || 0);
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+      if (sortBy === 'tdp-desc') return (b.tdp || 0) - (a.tdp || 0);
+      if (sortBy === 'tdp-asc') return (a.tdp || 0) - (b.tdp || 0);
+      
       if (selectedCategory === 'All') {
         const orderA = categoryOrder[a.category] || 99;
         const orderB = categoryOrder[b.category] || 99;
@@ -205,10 +213,6 @@ useEffect(() => {
         }
       }
 
-      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
-      if (sortBy === 'tdp-desc') return (b.tdp || 0) - (a.tdp || 0);
-      if (sortBy === 'tdp-asc') return (a.tdp || 0) - (b.tdp || 0);
       return 0;
     });
 

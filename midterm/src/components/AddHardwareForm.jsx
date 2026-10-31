@@ -4,6 +4,7 @@ export function AddHardwareForm({ onAdd, onClose }) {
   const [category, setCategory] = useState('CPU');
   
   const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
   const [socket, setSocket] = useState('');
   const [ramType, setRamType] = useState('DDR4'); // По умолчанию DDR4
   const [tdp, setTdp] = useState('');
@@ -35,7 +36,8 @@ export function AddHardwareForm({ onAdd, onClose }) {
     const newItem = {
       id: Date.now(),
       name: name.trim(),
-      category: category
+      category: category,
+      price: price ? Number(price) : 100
     };
 
     if (category === 'CPU') {
@@ -99,6 +101,17 @@ export function AddHardwareForm({ onAdd, onClose }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            style={styles.input}
+          />
+        </div>
+
+        <div style={styles.field}>
+          <label style={styles.label}>Price ($)</label>
+          <input
+            type="number"
+            placeholder="e.g. 299"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
             style={styles.input}
           />
         </div>

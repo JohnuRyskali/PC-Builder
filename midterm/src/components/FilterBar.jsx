@@ -42,6 +42,8 @@ export const FilterBar = ({
       >
         <option value="name-asc">Name (A-Z)</option>
         <option value="name-desc">Name (Z-A)</option>
+        <option value="price-asc">Price: Low to High</option>  {/* <--- Сортировка по цене */}
+        <option value="price-desc">Price: High to Low</option> {/* <--- Сортировка по цене */}
         <option value="tdp-desc">Highest TDP</option>
         <option value="tdp-asc">Lowest TDP</option>
       </select>
@@ -55,7 +57,7 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px',
     alignItems: 'center',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     marginBottom: '24px',
     padding: '16px',
     backgroundColor: '#1e1e24',
