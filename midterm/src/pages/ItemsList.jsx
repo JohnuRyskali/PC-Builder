@@ -35,7 +35,7 @@ export function ItemsList() {
     alert('Your build is empty. Select components first.');
     return;
   }
-  navigate('summary'); 
+  navigate('/summary'); 
 };
 
   const [searchParams, setSearchParams] = useSearchParams();
