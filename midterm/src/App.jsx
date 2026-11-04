@@ -27,7 +27,6 @@ const router = createBrowserRouter([
     ],
   },
 ], {
-  // Динамический basename: локально пустая строка, для продакшна (GitHub Pages) — '/PC-Builder/'
   basename: import.meta.env.DEV ? '' : '/PC-Builder/'
 });
 
