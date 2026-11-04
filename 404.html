@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <title>PC Builder</title>
     <script type="text/javascript">
-      // Этот скрипт перехватывает 404 на GitHub Pages и передает путь в index.html через query-параметр
-      var pathSegmentsToKeep = 1; // Указывает уровень вложенности (для /PC-Builder/ это 1)
+      var pathSegmentsToKeep = 1;
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
