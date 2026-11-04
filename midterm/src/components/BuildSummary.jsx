@@ -6,10 +6,8 @@ export function BuildSummary({ build, onRemove, onClear }) {
   const ram = build['Memory'] || build['RAM'] || build['ram'];
   const gpu = build['Video Card'] || build['GPU'] || build['gpu'];
 
-  // Total TDP
   const totalTdp = (cpu?.tdp || 0) + (gpu?.tdp || 0) + 50;
 
-  // Error Checks
   const getCompatibilityReport = () => {
     const errors = [];
     const warnings = [];

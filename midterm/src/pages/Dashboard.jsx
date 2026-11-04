@@ -7,7 +7,6 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Интерактивный фильтр для дашборда (выбор категории для статистики)
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
 
   useEffect(() => {
@@ -50,18 +49,16 @@ export function Dashboard() {
     return <div style={{ color: '#f87171', padding: '40px', textAlign: 'center' }}>{error}</div>;
   }
 
-  // Применяем интерактивный фильтр к набору данных для статистики
   const filteredData = selectedCategoryFilter === 'All' 
     ? components 
     : components.filter((item) => item.category === selectedCategoryFilter);
 
-  // 1. Статистические показатели (4+ показателей)
   const totalItems = filteredData.length;
   const avgPrice = totalItems > 0 ? (filteredData.reduce((acc, item) => acc + (Number(item.price) || 0), 0) / totalItems).toFixed(2) : 0;
   const avgTdp = totalItems > 0 ? (filteredData.reduce((acc, item) => acc + (Number(item.tdp) || 0), 0) / totalItems).toFixed(1) : 0;
   const maxPriceItem = filteredData.reduce((max, item) => (Number(item.price || 0) > Number(max?.price || 0) ? item : max), filteredData[0]);
 
-  // 2. Разбивки данных (Data Breakdowns: по категориям и по уровню энергопотребления / статусу)
+  //Data Breakdowns
   const categoryBreakdown = components.reduce((acc, item) => {
     const cat = item.category || 'Other';
     acc[cat] = (acc[cat] || 0) + 1;
@@ -85,7 +82,6 @@ export function Dashboard() {
           <p style={{ color: '#9ca3af', margin: '4px 0 0 0' }}>Overview of hardware statistics, breakdowns, and metrics.</p>
         </div>
         
-        {/* 3. Интерактивный фильтр, влияющий на статистику */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <label style={{ fontSize: '14px', color: '#d1d5db' }}>Filter Stats By:</label>
           <select 
@@ -102,7 +98,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 4+ Статистических карточек */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <div style={{ backgroundColor: '#1f2937', padding: '20px', borderRadius: '8px', border: '1px solid #374151' }}>
           <p style={{ color: '#9ca3af', margin: '0 0 8px 0', fontSize: '14px' }}>Total Items (Filtered)</p>
@@ -129,7 +124,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 2+ Разбивки данных (Data Breakdowns) */}
+      {/* Data Breakdowns */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', flexWrap: 'wrap' }}>
         <div style={{ backgroundColor: '#1f2937', padding: '20px', borderRadius: '8px', border: '1px solid #374151' }}>
           <h3 style={{ fontSize: '18px', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #374151', paddingBottom: '8px' }}>
@@ -160,7 +155,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Быстрые ссылки на страницы проекта (требование ТЗ) */}
+      {/* Quick Links */}
       <div style={{ marginTop: '32px', textAlign: 'center' }}>
         <Link to="/items" style={{ padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>
           Go to Hardware Catalog →

@@ -10,6 +10,7 @@ const ItemDetails = lazy(() => import('./pages/ItemDetails'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const BuildSummaryPage = lazy(() => import('./pages/BuildSummaryPage'));
 
 const router = createBrowserRouter([
   {
@@ -23,11 +24,12 @@ const router = createBrowserRouter([
       { path: 'items/:id', element: <ItemDetails /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'login', element: <Login /> },
+      { path: 'summary', element: <BuildSummaryPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
 ], {
-  basename: import.meta.env.DEV ? '' : '/PC-Builder/'
+  basename: '/PC-Builder'
 });
 
 export function App() {

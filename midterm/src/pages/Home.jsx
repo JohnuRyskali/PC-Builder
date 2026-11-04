@@ -11,7 +11,6 @@ export function Home() {
         Easily build your custom PC, check component compatibility in real time, analyze power consumption (TDP), and manage your hardware catalog.
       </p>
 
-      {/* Графический блок / Заглушка изображения */}
       <div style={{ 
         backgroundColor: '#1f2937', 
         padding: '60px 20px', 

@@ -6,6 +6,7 @@ import { BuildSummary } from '../components/BuildSummary';
 import { FilterBar } from '../components/FilterBar';
 import { HardwareDetailModal } from '../components/HardwareDetailModal';
 import { AddHardwareForm } from '../components/AddHardwareForm';
+import { useNavigate } from 'react-router-dom';
 
 const categoryOrder = {
   CPU: 1,
@@ -26,8 +27,18 @@ export function ItemsList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
 
+  const navigate = useNavigate();
+
+  const handleGoToSummary = () => {
+  const hasItems = Object.values(build).some((item) => item !== null);
+  if (!hasItems) {
+    alert('Your build is empty. Select components first.');
+    return;
+  }
+  navigate('summary'); 
+};
+
   const [searchParams, setSearchParams] = useSearchParams();
-  
 
   // localStorage initialization
   const [build, setBuild] = useState(() => {
@@ -75,7 +86,6 @@ export function ItemsList() {
     });
   };
 
-  // Saving to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
@@ -84,8 +94,7 @@ export function ItemsList() {
     }
   }, [build]);
 
-  // Загрузка каталога с API + объединение с кастомными из localStorage
-useEffect(() => {
+  useEffect(() => {
     let ignore = false;
     setLoading(true);
     setError(null);
@@ -129,7 +138,6 @@ useEffect(() => {
     };
   }, []);
 
-  // Pagination reset
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, sortBy]);
@@ -164,7 +172,6 @@ useEffect(() => {
     });
   };
 
-  // new comp w save in localStorage
   const handleAddNewComponent = (newComponent) => {
     setComponents((prev) => {
       if (prev.some((item) => item.id === newComponent.id)) {
@@ -189,7 +196,6 @@ useEffect(() => {
     });
   };
 
-  // Filtering, Sorting
   const filteredComponents = components
     .filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -197,7 +203,6 @@ useEffect(() => {
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      // 1. Сначала отрабатывает сортировка — перемешивает разные категории по общей цене/имени/TDP
       if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
       if (sortBy === 'price-asc') return (a.price || 0) - (b.price || 0);
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
@@ -251,21 +256,41 @@ useEffect(() => {
         <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold', lineHeight: '1.2' }}>
           PC Part Picker & Compatibility Checker
         </h1>
-        <button
-          onClick={() => setIsAddFormOpen(true)}
-          style={{
-            padding: '10px 18px',
-            backgroundColor: '#10b981',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          + Add Custom Hardware
-        </button>
+        
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Bonus Feature: Export Build */}
+          <button
+            onClick={handleGoToSummary}
+            style={{
+              padding: '10px 18px',
+              backgroundColor: '#10b981',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            📥 Export Build (.txt)
+          </button>
+
+          <button
+            onClick={() => setIsAddFormOpen(true)}
+            style={{
+              padding: '10px 18px',
+              backgroundColor: '#2563eb',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            + Add Custom Hardware
+          </button>
+        </div>
       </div>
 
       <BuildSummary 
