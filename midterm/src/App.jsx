@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { RootLayout } from './components/RootLayout';
+import RootLayout from './components/RootLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 
 const Home = lazy(() => import('./pages/Home'));
@@ -8,9 +9,11 @@ const About = lazy(() => import('./pages/About'));
 const ItemsList = lazy(() => import('./pages/ItemsList'));
 const ItemDetails = lazy(() => import('./pages/ItemDetails'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Login = lazy(() => import('./pages/Login'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BuildSummaryPage = lazy(() => import('./pages/BuildSummaryPage'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 const router = createBrowserRouter([
   {
@@ -24,6 +27,15 @@ const router = createBrowserRouter([
       { path: 'items/:id', element: <ItemDetails /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'login', element: <Login /> },
+      { path: 'signup', element: <Signup /> },
+      { 
+        path: 'profile', 
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ) 
+},
       { path: 'summary', element: <BuildSummaryPage /> },
       { path: '*', element: <NotFound /> },
     ],
