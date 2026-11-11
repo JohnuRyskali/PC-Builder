@@ -22,7 +22,6 @@ export default function RootLayout() {
             <NavLink to="/" style={linkStyle} end>Home</NavLink>
             <NavLink to="items" style={linkStyle}>Catalog</NavLink>
             <NavLink to="summary" style={linkStyle}>Summary & Export</NavLink>
-            <NavLink to="dashboard" style={linkStyle}>Dashboard</NavLink>
           </nav>
         </div>
 
