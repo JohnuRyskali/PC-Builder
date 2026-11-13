@@ -1,45 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchComponents } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export function Dashboard() {
-  const [components, setComponents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [catalogResult, setCatalogResult] = useState({ key: null, components: [], error: null });
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+  const { currentUser } = useAuth();
+  const userId = currentUser?.uid;
+  const catalogKey = userId || 'guest';
+  const loading = catalogResult.key !== catalogKey;
+  const error = loading ? null : catalogResult.error;
+  const components = loading ? [] : catalogResult.components;
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
-    setError(null);
 
-    fetchComponents()
+    fetchComponents(userId)
       .then((data) => {
         if (!ignore) {
-          let customItems = [];
-          try {
-            const savedCustom = localStorage.getItem('pc_builder_custom_components');
-            if (savedCustom) customItems = JSON.parse(savedCustom);
-          } catch (e) {
-            console.error(e);
-          }
-          const all = [...customItems, ...data];
-          setComponents(all);
-          setLoading(false);
+          setCatalogResult({ key: catalogKey, components: data, error: null });
         }
       })
       .catch((err) => {
         if (!ignore) {
-          setError(err.message || 'Failed to load dashboard data');
-          setLoading(false);
+          setCatalogResult({
+            key: catalogKey,
+            components: [],
+            error: err.message || 'Failed to load dashboard data',
+          });
         }
       });
 
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [userId, catalogKey]);
 
   if (loading) {
     return <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading dashboard analytics...</div>;

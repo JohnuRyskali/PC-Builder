@@ -1,54 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchComponents } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export function ItemDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [item, setItem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [itemResult, setItemResult] = useState({ key: null, item: null, error: null });
+  const { currentUser } = useAuth();
+  const userId = currentUser?.uid;
+  const queryKey = `${userId || 'guest'}:${id}`;
+  const loading = itemResult.key !== queryKey;
+  const item = loading ? null : itemResult.item;
+  const error = loading ? null : itemResult.error;
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
-    setError(null);
 
-    fetchComponents()
+    fetchComponents(userId)
       .then((data) => {
         if (!ignore) {
-          // Ищем среди API и кастомных элементов
-          let customItems = [];
-          try {
-            const savedCustom = localStorage.getItem('pc_builder_custom_components');
-            if (savedCustom) customItems = JSON.parse(savedCustom);
-          } catch (e) {
-            console.error(e);
-          }
-
-          const allItems = [...customItems, ...data];
-          // Сравниваем строки или числа (приводим к string для надежности)
-          const found = allItems.find((comp) => String(comp.id) === String(id));
+          const found = data.find((comp) => String(comp.id) === String(id));
 
           if (found) {
-            setItem(found);
+            setItemResult({ key: queryKey, item: found, error: null });
           } else {
-            setError('Item not found.');
+            setItemResult({ key: queryKey, item: null, error: 'Item not found.' });
           }
-          setLoading(false);
         }
       })
       .catch((err) => {
         if (!ignore) {
-          setError(err.message || 'Failed to fetch item details');
-          setLoading(false);
+          setItemResult({
+            key: queryKey,
+            item: null,
+            error: err.message || 'Failed to fetch item details',
+          });
         }
       });
 
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, queryKey, userId]);
 
   if (loading) {
     return <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading item details...</div>;

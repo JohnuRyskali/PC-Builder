@@ -3,14 +3,12 @@ import rawMobos from '../assets/data/motherboard.json';
 import rawRams from '../assets/data/memory.json';
 import rawGpus from '../assets/data/video-card.json';
 import { getCachedData, setCachedData, invalidateCache } from './cacheService';
+import { addUserCustomComponent, loadUserData } from './userData';
 
 const STORAGE_KEY = 'pc_compatibility_catalog';
-const CUSTOM_ITEMS_STORAGE_KEY = 'pc_builder_custom_components';
 
-// Query Key для кэша каталога
 export const CATALOG_QUERY_KEY = 'catalog_hardware_components';
 
-// Вспомогательная функция определения сокета
 const parseSocket = (name, rawSocket) => {
   if (rawSocket) return rawSocket;
   const upper = name.toUpperCase();
@@ -22,7 +20,6 @@ const parseSocket = (name, rawSocket) => {
   return 'AM5';
 };
 
-// Нормализация базовых данных из JSON
 const normalizeData = () => {
   const cpus = rawCpus.slice(0, 30).map((item, index) => ({
     id: `cpu-${index + 1}`,
@@ -88,23 +85,15 @@ const normalizeData = () => {
   return [...cpus, ...mobos, ...rams, ...gpus];
 };
 
-// Чтение данных из хранилища (базовые + кастомные)
-const getStoredData = () => {
-  let localData = [];
+const getStoredData = (customItems) => {
+  let localData;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     localData = saved ? JSON.parse(saved) : normalizeData();
     if (!saved) localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
-  } catch (e) {
+  } catch (error) {
+    console.error('Failed to load the base hardware catalog:', error);
     localData = normalizeData();
-  }
-
-  let customItems = [];
-  try {
-    const savedCustom = localStorage.getItem(CUSTOM_ITEMS_STORAGE_KEY);
-    if (savedCustom) customItems = JSON.parse(savedCustom);
-  } catch (e) {
-    console.error(e);
   }
 
   const uniqueMap = new Map();
@@ -117,50 +106,19 @@ const getStoredData = () => {
   return Array.from(uniqueMap.values());
 };
 
-// Server Data Caching
-export const fetchComponents = () => {
-  return new Promise((resolve, reject) => {
-    // 1. Check if we have cached data for the catalog query
-    const cached = getCachedData(CATALOG_QUERY_KEY);
-    if (cached) {
-      // return cached data immediately if available
-      return resolve(cached);
-    }
+export const fetchComponents = async (userId) => {
+  const queryKey = `${CATALOG_QUERY_KEY}:${userId || 'guest'}`;
+  const cached = getCachedData(queryKey);
+  if (cached) return cached;
 
-    // 2. If no cached data, simulate a server fetch with a delay and random failure
-    setTimeout(() => {
-      if (Math.random() < 0.01) {
-        reject(new Error('Failed to load hardware catalog. Please refresh.'));
-      } else {
-        const freshData = getStoredData();
-        // Save the fresh data to cache
-        setCachedData(CATALOG_QUERY_KEY, freshData);
-        resolve(freshData);
-      }
-    }, 500);
-  });
+  const { customComponents } = await loadUserData(userId);
+  const freshData = getStoredData(customComponents);
+  setCachedData(queryKey, freshData);
+  return freshData;
 };
 
-// Add a new component to the catalog and invalidate the cache
-export const addComponentToCatalog = (newItem) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const itemWithId = { ...newItem, id: `custom-${Date.now()}` };
-      
-      try {
-        const savedCustom = localStorage.getItem(CUSTOM_ITEMS_STORAGE_KEY);
-        const currentCustom = savedCustom ? JSON.parse(savedCustom) : [];
-        const updatedCustom = [itemWithId, ...currentCustom];
-        localStorage.setItem(CUSTOM_ITEMS_STORAGE_KEY, JSON.stringify(updatedCustom));
-      } catch (e) {
-        console.error('Failed to save custom item:', e);
-      }
-
-      // Cache Invalidation Strategy
-      // When creating a new item, we clear the cache so that the next fetch retrieves up-to-date data.
-      invalidateCache(CATALOG_QUERY_KEY);
-
-      resolve(itemWithId);
-    }, 400);
-  });
+export const addComponentToCatalog = async (newItem, userId) => {
+  const itemWithId = await addUserCustomComponent(userId, newItem);
+  invalidateCache(`${CATALOG_QUERY_KEY}:${userId}`);
+  return itemWithId;
 };

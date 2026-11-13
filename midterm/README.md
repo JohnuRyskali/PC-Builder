@@ -1,16 +1,11 @@
-# React + Vite
+# PC Builder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Firebase setup
 
-Currently, two official plugins are available:
+1. In the Firebase console, enable the Authentication providers used by the app and create a Cloud Firestore database.
+2. Copy `.env.example` to `.env.local` and fill in the web app configuration from Firebase Project settings.
+3. Select your Firebase project in the Firebase CLI (`firebase use --add`) and deploy `firestore.rules` (`firebase deploy --only firestore:rules`), or copy the rules into the Firestore Rules tab in the console.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Builds and custom hardware are stored under the signed-in user's UID in Firestore. Existing build and custom hardware values in local storage are imported once when that user's Firestore data is first initialized. Signed-out users can create an in-memory build, but it is not persisted.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Start the app with `npm run dev`.

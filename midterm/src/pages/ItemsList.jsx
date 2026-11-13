@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { fetchComponents, addComponentToCatalog } from '../services/api'; // Вся логика в сервисе!
+import { useAuth } from '../context/AuthContext';
+import { EMPTY_BUILD, loadUserData, saveUserBuild } from '../services/userData';
 import { HardwareCard } from '../components/HardwareCard';
 import { BuildSummary } from '../components/BuildSummary';
 import { FilterBar } from '../components/FilterBar';
@@ -8,19 +10,29 @@ import { HardwareDetailModal } from '../components/HardwareDetailModal';
 import { AddHardwareForm } from '../components/AddHardwareForm';
 
 const categoryOrder = { CPU: 1, Motherboard: 2, Memory: 3, 'Video Card': 4 };
-const STORAGE_KEY = 'pc_builder_current_build';
 const ITEMS_PER_PAGE = 12;
 
 export function ItemsList() {
-  const [components, setComponents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [catalogVersion, setCatalogVersion] = useState(0);
+  const [buildLoadVersion, setBuildLoadVersion] = useState(0);
+  const [catalogResult, setCatalogResult] = useState({ key: null, components: [], error: null });
+  const [buildData, setBuildData] = useState({ owner: null, value: { ...EMPTY_BUILD } });
+  const [buildErrorState, setBuildErrorState] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { currentUser } = useAuth();
+  const userId = currentUser?.uid;
+  const catalogKey = `${userId || 'guest'}:${catalogVersion}`;
+  const loading = catalogResult.key !== catalogKey;
+  const error = loading ? null : catalogResult.error;
+  const components = loading ? [] : catalogResult.components;
+  const buildOwner = userId || null;
+  const build = buildData.owner === buildOwner ? buildData.value : EMPTY_BUILD;
+  const buildError = buildErrorState?.owner === buildOwner ? buildErrorState.message : '';
 
   const handleGoToSummary = () => {
     const hasItems = Object.values(build).some((item) => item !== null);
@@ -28,25 +40,15 @@ export function ItemsList() {
       alert('Your build is empty. Select components first.');
       return;
     }
-    navigate('/summary'); 
+    navigate('/summary', { state: { build, owner: userId || null } });
   };
-
-  // Current PC state
-  const [build, setBuild] = useState(() => {
-    try {
-      const savedBuild = localStorage.getItem(STORAGE_KEY);
-      if (savedBuild) return JSON.parse(savedBuild);
-    } catch (e) {
-      console.error('Failed to load build:', e);
-    }
-    return { CPU: null, Motherboard: null, Memory: null, 'Video Card': null };
-  });
 
   const searchQuery = searchParams.get('search') || '';
   const selectedCategory = searchParams.get('category') || 'All';
   const sortBy = searchParams.get('sort') || 'name-asc';
 
   const handleSearchChange = (query) => {
+    setCurrentPage(1);
     setSearchParams((prev) => {
       if (query) prev.set('search', query);
       else prev.delete('search');
@@ -55,6 +57,7 @@ export function ItemsList() {
   };
 
   const handleSelectedCategoryChange = (category) => {
+    setCurrentPage(1);
     setSearchParams((prev) => {
       if (category && category !== 'All') prev.set('category', category);
       else prev.delete('category');
@@ -63,6 +66,7 @@ export function ItemsList() {
   };
 
   const handleSortChange = (sort) => {
+    setCurrentPage(1);
     setSearchParams((prev) => {
       if (sort) prev.set('sort', sort);
       else prev.delete('sort');
@@ -71,68 +75,94 @@ export function ItemsList() {
   };
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
-    } catch (e) {
-      console.error('Failed to save build:', e);
-    }
-  }, [build]);
-
-  // Load data with caching and error handling
-  const loadData = () => {
     let ignore = false;
-    setLoading(true);
-    setError(null);
+    if (!userId) return () => { ignore = true; };
 
-    fetchComponents()
-      .then((data) => {
+    loadUserData(userId)
+      .then(({ build: savedBuild }) => {
         if (!ignore) {
-          setComponents(data);
-          setLoading(false);
+          setBuildData({ owner: userId, value: { ...EMPTY_BUILD, ...savedBuild } });
         }
       })
       .catch((err) => {
         if (!ignore) {
-          setError(err.message || 'Failed to fetch catalog');
-          setLoading(false);
+          console.error('Failed to load saved build:', err);
+          setBuildErrorState({
+            owner: userId,
+            message: 'Could not load your saved data. Check your Firebase configuration and try again.',
+          });
         }
       });
 
     return () => { ignore = true; };
+  }, [userId, buildLoadVersion]);
+
+  useEffect(() => {
+    if (!userId || buildData.owner !== userId) return undefined;
+
+    const timeout = setTimeout(() => {
+      saveUserBuild(userId, buildData.value)
+        .then(() => {
+          setBuildErrorState((previous) => previous?.owner === userId ? null : previous);
+        })
+        .catch((err) => {
+          console.error('Failed to save build:', err);
+          setBuildErrorState({
+            owner: userId,
+            message: 'Could not save your build to Firebase. Please try again.',
+          });
+        });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [buildData, userId]);
+
+  useEffect(() => {
+    let ignore = false;
+    fetchComponents(userId)
+      .then((data) => {
+        if (!ignore) {
+          setCatalogResult({ key: catalogKey, components: data, error: null });
+        }
+      })
+      .catch((err) => {
+        if (!ignore) {
+          setCatalogResult({ key: catalogKey, components: [], error: err.message || 'Failed to fetch catalog' });
+        }
+      });
+
+    return () => { ignore = true; };
+  }, [userId, catalogKey]);
+
+  const updateBuild = (updater) => {
+    if (userId && buildData.owner !== userId) return;
+
+    setBuildData((previous) => {
+      const owner = userId || null;
+      const previousBuild = previous.owner === owner ? previous.value : EMPTY_BUILD;
+      return { owner, value: updater(previousBuild) };
+    });
   };
-
-  useEffect(() => {
-    return loadData();
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory, sortBy]);
 
   const handleAddToBuild = (item) => {
     if (!item || !item.category) return;
     let targetCategory = item.category;
     if (item.category === 'GPU' || item.category === 'VideoCard') targetCategory = 'Video Card';
 
-    setBuild((prevBuild) => ({ ...prevBuild, [targetCategory]: item }));
+    updateBuild((prevBuild) => ({ ...prevBuild, [targetCategory]: item }));
   };
 
   const handleRemoveFromBuild = (category) => {
-    setBuild((prevBuild) => ({ ...prevBuild, [category]: null }));
+    updateBuild((prevBuild) => ({ ...prevBuild, [category]: null }));
   };
 
   const handleClearBuild = () => {
-    setBuild({ CPU: null, Motherboard: null, Memory: null, 'Video Card': null });
+    updateBuild(() => ({ ...EMPTY_BUILD }));
   };
 
   const handleAddNewComponent = async (newComponent) => {
-    try {
-      await addComponentToCatalog(newComponent);
-      // After adding a new component, reload the data to reflect the changes
-      loadData();
-    } catch (e) {
-      console.error('Failed to add hardware:', e);
-    }
+    await addComponentToCatalog(newComponent, userId);
+    setCatalogVersion((version) => version + 1);
   };
 
   const filteredComponents = components
@@ -163,11 +193,32 @@ export function ItemsList() {
 
   if (loading) return <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading hardware catalog...</div>;
 
+  if (userId && buildData.owner !== userId) {
+    if (buildError) {
+      return (
+        <div style={{ color: '#f87171', padding: '40px', textAlign: 'center' }}>
+          <p role="alert">{buildError}</p>
+          <button
+            onClick={() => {
+              setBuildErrorState(null);
+              setBuildLoadVersion((version) => version + 1);
+            }}
+            style={{ padding: '8px 16px', marginTop: '12px', cursor: 'pointer' }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    return <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading your saved build...</div>;
+  }
+
   if (error) {
     return (
       <div style={{ color: '#f87171', padding: '40px', textAlign: 'center' }}>
         <p>{error}</p>
-        <button onClick={loadData} style={{ padding: '8px 16px', marginTop: '12px', cursor: 'pointer' }}>
+        <button onClick={() => setCatalogVersion((version) => version + 1)} style={{ padding: '8px 16px', marginTop: '12px', cursor: 'pointer' }}>
           Retry
         </button>
       </div>
@@ -186,11 +237,18 @@ export function ItemsList() {
             📥 Export Build (.txt)
           </button>
 
-          <button onClick={() => setIsAddFormOpen(true)} style={{ padding: '10px 18px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={() => currentUser ? setIsAddFormOpen(true) : navigate('/login')} style={{ padding: '10px 18px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             + Add Custom Hardware
           </button>
         </div>
       </div>
+
+      {!currentUser && (
+        <p style={{ color: '#9ca3af', marginTop: 0 }}>
+          <Link to="/login" style={{ color: '#60a5fa' }}>Sign in</Link> to sync your build and custom hardware across devices.
+        </p>
+      )}
+      {buildError && <p role="alert" style={{ color: '#f87171' }}>{buildError}</p>}
 
       <BuildSummary build={build} onRemove={handleRemoveFromBuild} onClear={handleClearBuild} />
       <FilterBar searchQuery={searchQuery} onSearchChange={handleSearchChange} selectedCategory={selectedCategory} onCategoryChange={handleSelectedCategoryChange} sortBy={sortBy} onSortChange={handleSortChange} />

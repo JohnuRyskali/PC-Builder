@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export function AddHardwareForm({ onAdd, onClose }) {
   const [category, setCategory] = useState('CPU');
-  
+  const [submissionError, setSubmissionError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [socket, setSocket] = useState('');
@@ -20,16 +21,11 @@ export function AddHardwareForm({ onAdd, onClose }) {
     setVram('');
   };
 
-  const handleButtonClick = () => {
-    console.log('🖱️ [AddHardwareForm] Submit button clicked!');
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🚀 [AddHardwareForm] Form submit triggered with name:', name);
+    setSubmissionError('');
 
     if (!name.trim()) {
-      console.warn('⚠️ [AddHardwareForm] Validation failed: Name is empty.');
       return;
     }
 
@@ -53,18 +49,15 @@ export function AddHardwareForm({ onAdd, onClose }) {
       if (vram) newItem.vram = Number(vram);
     }
 
-    console.log('📦 [AddHardwareForm] Payload created:', newItem);
-
-    if (typeof onAdd === 'function') {
-      console.log('✅ [AddHardwareForm] Calling onAdd callback...');
-      onAdd(newItem);
-    } else {
-      console.error('❌ [AddHardwareForm] onAdd prop is missing or not a function!', onAdd);
-    }
-
-    if (typeof onClose === 'function') {
-      console.log('🔒 [AddHardwareForm] Calling onClose callback...');
-      onClose();
+    try {
+      setIsSubmitting(true);
+      await onAdd(newItem);
+      onClose?.();
+    } catch (error) {
+      console.error('Failed to save custom hardware:', error);
+      setSubmissionError(error.message || 'Failed to save custom hardware.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -72,6 +65,7 @@ export function AddHardwareForm({ onAdd, onClose }) {
     <div style={styles.overlay}>
       <form onSubmit={handleSubmit} style={styles.form}>
         <h3 style={styles.title}>➕ Add Custom Hardware</h3>
+        {submissionError && <div role="alert" style={{ color: '#f87171' }}>{submissionError}</div>}
 
         {/* 1. Category */}
         <div style={styles.field}>
@@ -228,10 +222,10 @@ export function AddHardwareForm({ onAdd, onClose }) {
           )}
           <button 
             type="submit" 
-            onClick={handleButtonClick}
+            disabled={isSubmitting}
             style={styles.submitBtn}
           >
-            Add Hardware
+            {isSubmitting ? 'Saving...' : 'Add Hardware'}
           </button>
         </div>
       </form>

@@ -1,20 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-const STORAGE_KEY = 'pc_builder_current_build';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { EMPTY_BUILD, loadUserData } from '../services/userData';
 
 export default function BuildSummaryPage() {
   const navigate = useNavigate();
-  const [build, setBuild] = useState({ CPU: null, Motherboard: null, Memory: null, 'Video Card': null });
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const userId = currentUser?.uid;
+  const routeBuild = location.state?.owner === (userId || null)
+    ? location.state?.build
+    : null;
+  const [savedBuild, setSavedBuild] = useState({ owner: null, value: { ...EMPTY_BUILD }, error: '' });
+  const hasSavedBuild = savedBuild.owner === (userId || null);
+  const build = routeBuild
+    ? { ...EMPTY_BUILD, ...routeBuild }
+    : hasSavedBuild ? savedBuild.value : EMPTY_BUILD;
+  const loading = Boolean(userId && !routeBuild && !hasSavedBuild);
+  const error = hasSavedBuild ? savedBuild.error : '';
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setBuild(JSON.parse(saved));
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    let ignore = false;
+
+    if (!userId || routeBuild) return () => { ignore = true; };
+
+    loadUserData(userId)
+      .then(({ build: savedBuild }) => {
+        if (!ignore) {
+          setSavedBuild({ owner: userId, value: { ...EMPTY_BUILD, ...savedBuild }, error: '' });
+        }
+      })
+      .catch((loadError) => {
+        if (!ignore) {
+          console.error('Failed to load saved build:', loadError);
+          setSavedBuild({
+            owner: userId,
+            value: { ...EMPTY_BUILD },
+            error: 'Could not load your saved build from Firebase.',
+          });
+        }
+      });
+
+    return () => { ignore = true; };
+  }, [routeBuild, userId]);
 
   let totalCost = 0;
   let cpuTdp = 0;
@@ -52,9 +80,19 @@ export default function BuildSummaryPage() {
     URL.revokeObjectURL(url);
   };
 
+  if (loading) {
+    return <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading your saved build...</div>;
+  }
+
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto', color: '#fff' }}>
       <h1>📦 Build Summary & Export</h1>
+      {error && <p role="alert" style={{ color: '#f87171' }}>{error}</p>}
+      {!userId && !routeBuild && (
+        <p style={{ color: '#9ca3af' }}>
+          This build is not saved. <Link to="/login" style={{ color: '#60a5fa' }}>Sign in</Link> to sync builds across devices.
+        </p>
+      )}
       
       <div style={{ background: '#1e1e1e', padding: '20px', borderRadius: '8px', marginTop: '20px' }}>
         <h3>Selected Components:</h3>
