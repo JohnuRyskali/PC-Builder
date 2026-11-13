@@ -1,9 +1,26 @@
-import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function RootLayout() {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
+  const [logoutError, setLogoutError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      setLogoutError('');
+      setLoggingOut(true);
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+      setLogoutError(error.message || 'Failed to log out. Please try again.');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   // Adjusted active colors to look great on a dark background (#121212)
   const linkStyle = ({ isActive }) => ({
@@ -29,6 +46,21 @@ export default function RootLayout() {
           {currentUser ? (
             <>
               <NavLink to="profile" style={linkStyle}>Profile</NavLink>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  color: '#b0b0b0',
+                  font: 'inherit',
+                  cursor: loggingOut ? 'wait' : 'pointer',
+                }}
+              >
+                {loggingOut ? 'Logging out...' : 'Log Out'}
+              </button>
             </>
           ) : (
             <>
@@ -38,6 +70,11 @@ export default function RootLayout() {
           )}
         </nav>
       </header>
+      {logoutError && (
+        <p role="alert" style={{ color: '#f87171', textAlign: 'right', margin: '8px 24px 0' }}>
+          {logoutError}
+        </p>
+      )}
 
       <main style={{ padding: '24px' }}>
         <Outlet />
