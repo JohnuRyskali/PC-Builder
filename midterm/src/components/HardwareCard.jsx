@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Category Color
 const getBadgeColor = (category) => {
@@ -16,7 +16,7 @@ const getBadgeColor = (category) => {
   }
 };
 
-export const HardwareCard = ({ item, onAddToBuild, onSelect }) => {
+export const HardwareCard = ({ item, onAddToBuild }) => {
   const badgeColor = getBadgeColor(item.category);
 
   return (
@@ -41,9 +41,12 @@ export const HardwareCard = ({ item, onAddToBuild, onSelect }) => {
       </div>
 
       <div style={styles.actions}>
-        <button style={styles.detailsBtn} onClick={() => onSelect(item)}>
+        <Link
+          to={`/items/${encodeURIComponent(String(item.id))}`}
+          style={{ ...styles.detailsBtn, textDecoration: 'none', textAlign: 'center' }}
+        >
           Details
-        </button>
+        </Link>
         <button 
           style={styles.addBtn} 
           onClick={(e) => {

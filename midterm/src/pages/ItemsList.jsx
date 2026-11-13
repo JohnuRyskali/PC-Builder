@@ -6,14 +6,12 @@ import { EMPTY_BUILD, loadUserData, saveUserBuild } from '../services/userData';
 import { HardwareCard } from '../components/HardwareCard';
 import { BuildSummary } from '../components/BuildSummary';
 import { FilterBar } from '../components/FilterBar';
-import { HardwareDetailModal } from '../components/HardwareDetailModal';
 import { AddHardwareForm } from '../components/AddHardwareForm';
 
 const categoryOrder = { CPU: 1, Motherboard: 2, Memory: 3, 'Video Card': 4 };
 const ITEMS_PER_PAGE = 12;
 
 export function ItemsList() {
-  const [selectedItem, setSelectedItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [catalogVersion, setCatalogVersion] = useState(0);
@@ -260,7 +258,7 @@ export function ItemsList() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {paginatedComponents.map((item) => (
-            <HardwareCard key={item.id} item={item} onAddToBuild={handleAddToBuild} onSelect={(selected) => setSelectedItem(selected)} />
+            <HardwareCard key={item.id} item={item} onAddToBuild={handleAddToBuild} />
           ))}
         </div>
       )}
@@ -279,7 +277,6 @@ export function ItemsList() {
         </div>
       )}
 
-      <HardwareDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} onAddToBuild={handleAddToBuild} />
       {isAddFormOpen && <AddHardwareForm onClose={() => setIsAddFormOpen(false)} onAdd={handleAddNewComponent} />}
     </div>
   );
