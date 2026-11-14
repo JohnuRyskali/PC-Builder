@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { fetchComponents, addComponentToCatalog } from '../services/api'; // Вся логика в сервисе!
+import { fetchComponents, addComponentToCatalog } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { EMPTY_BUILD, loadUserData, saveUserBuild } from '../services/userData';
 import { HardwareCard } from '../components/HardwareCard';
