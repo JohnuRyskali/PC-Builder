@@ -1,0 +1,142 @@
+{
+  "_api-DY51QVH-.js": {
+    "file": "assets/api-DY51QVH-.js",
+    "name": "api",
+    "imports": [
+      "_userData-DkQ1NtPI.js"
+    ]
+  },
+  "_userData-DkQ1NtPI.js": {
+    "file": "assets/userData-DkQ1NtPI.js",
+    "name": "userData",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "index.html": {
+    "file": "assets/index-DmIDQexR.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/pages/Home.jsx",
+      "src/pages/About.jsx",
+      "src/pages/ItemsList.jsx",
+      "src/pages/ItemDetails.jsx",
+      "src/pages/Dashboard.jsx",
+      "src/pages/NotFound.jsx",
+      "src/pages/BuildSummaryPage.jsx",
+      "src/pages/Login.jsx",
+      "src/pages/Signup.jsx",
+      "src/pages/Profile.jsx",
+      "src/pages/Offline.jsx"
+    ],
+    "css": [
+      "assets/index-BexGO57R.css"
+    ]
+  },
+  "src/pages/About.jsx": {
+    "file": "assets/About-C5iE4QOG.js",
+    "name": "About",
+    "src": "src/pages/About.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/BuildSummaryPage.jsx": {
+    "file": "assets/BuildSummaryPage-BzPrY0V7.js",
+    "name": "BuildSummaryPage",
+    "src": "src/pages/BuildSummaryPage.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_userData-DkQ1NtPI.js"
+    ]
+  },
+  "src/pages/Dashboard.jsx": {
+    "file": "assets/Dashboard-Jb5_UruO.js",
+    "name": "Dashboard",
+    "src": "src/pages/Dashboard.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_api-DY51QVH-.js"
+    ]
+  },
+  "src/pages/Home.jsx": {
+    "file": "assets/Home-BNgGSVJ8.js",
+    "name": "Home",
+    "src": "src/pages/Home.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/ItemDetails.jsx": {
+    "file": "assets/ItemDetails-COc2p5u3.js",
+    "name": "ItemDetails",
+    "src": "src/pages/ItemDetails.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_api-DY51QVH-.js"
+    ]
+  },
+  "src/pages/ItemsList.jsx": {
+    "file": "assets/ItemsList-DjU0lRjM.js",
+    "name": "ItemsList",
+    "src": "src/pages/ItemsList.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_userData-DkQ1NtPI.js",
+      "_api-DY51QVH-.js"
+    ]
+  },
+  "src/pages/Login.jsx": {
+    "file": "assets/Login-OkQULyZp.js",
+    "name": "Login",
+    "src": "src/pages/Login.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/NotFound.jsx": {
+    "file": "assets/NotFound-Cyhqqiq9.js",
+    "name": "NotFound",
+    "src": "src/pages/NotFound.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/Offline.jsx": {
+    "file": "assets/Offline-DrmWDfR4.js",
+    "name": "Offline",
+    "src": "src/pages/Offline.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/Profile.jsx": {
+    "file": "assets/Profile-BlgTY0gx.js",
+    "name": "Profile",
+    "src": "src/pages/Profile.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/pages/Signup.jsx": {
+    "file": "assets/Signup-Bo70xZxy.js",
+    "name": "Signup",
+    "src": "src/pages/Signup.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  }
+}
