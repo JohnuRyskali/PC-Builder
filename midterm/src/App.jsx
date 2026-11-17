@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './components/RootLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -14,6 +14,7 @@ const BuildSummaryPage = lazy(() => import('./pages/BuildSummaryPage'));
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Offline = lazy(() => import('./pages/Offline'));
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
         ) 
 },
       { path: 'summary', element: <BuildSummaryPage /> },
+      { path: 'offline', element: <Offline /> },
       { path: '*', element: <NotFound /> },
     ],
   },

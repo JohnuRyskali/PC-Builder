@@ -1,12 +1,56 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function RootLayout() {
   const { currentUser, logout } = useAuth();
   const [logoutError, setLogoutError] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [updateAvailable, setUpdateAvailable] = useState(() => Boolean(window.pwaUpdateAvailable));
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    const onUpdateAvailable = () => setUpdateAvailable(true);
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('pwa:update-available', onUpdateAvailable);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('pwa:update-available', onUpdateAvailable);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+    } catch (error) {
+      console.error('Failed to show the install prompt:', error);
+    }
+  };
+
+  const handleUpdate = () => {
+    window.dispatchEvent(new Event('pwa:activate-update'));
+  };
+
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   const handleLogout = async () => {
     try {
@@ -22,7 +66,6 @@ export default function RootLayout() {
     }
   };
 
-  // Adjusted active colors to look great on a dark background (#121212)
   const linkStyle = ({ isActive }) => ({
     color: isActive ? '#ff6b6b' : '#b0b0b0',
     fontWeight: isActive ? 'bold' : 'normal',
@@ -31,18 +74,39 @@ export default function RootLayout() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#121212', color: '#fff' }}>
-      <header style={{ padding: '16px 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>PC Builder SPA</h2>
-          <nav style={{ display: 'flex', gap: '16px' }}>
-            <NavLink to="/" style={linkStyle} end>Home</NavLink>
-            <NavLink to="items" style={linkStyle}>Catalog</NavLink>
-            <NavLink to="summary" style={linkStyle}>Summary & Export</NavLink>
-          </nav>
+    <div className="app-shell">
+      <header className="site-header">
+        <div className="header-brand">
+          <h2 className="site-title">PC Builder SPA</h2>
+          <button
+            type="button"
+            className="mobile-nav-toggle"
+            aria-expanded={mobileNavOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            {mobileNavOpen ? 'Close menu' : 'Menu'}
+          </button>
         </div>
 
-        <nav style={{ display: 'flex', gap: '16px' }}>
+        <nav
+          id="primary-navigation"
+          className={`primary-navigation${mobileNavOpen ? ' is-open' : ''}`}
+          aria-label="Main navigation"
+        >
+          <NavLink to="/" style={linkStyle} end onClick={closeMobileNav}>Home</NavLink>
+          <NavLink to="items" style={linkStyle} onClick={closeMobileNav}>Catalog</NavLink>
+          <NavLink to="summary" style={linkStyle} onClick={closeMobileNav}>Summary & Export</NavLink>
+          <NavLink to="dashboard" style={linkStyle} onClick={closeMobileNav}>Dashboard</NavLink>
+          <NavLink to="about" style={linkStyle} onClick={closeMobileNav}>About</NavLink>
+        </nav>
+
+        <nav className="account-navigation" aria-label="Account navigation">
+          {installPrompt && (
+            <button type="button" className="install-button" onClick={handleInstall}>
+              Install App
+            </button>
+          )}
           {currentUser ? (
             <>
               <NavLink to="profile" style={linkStyle}>Profile</NavLink>
@@ -50,14 +114,7 @@ export default function RootLayout() {
                 type="button"
                 onClick={handleLogout}
                 disabled={loggingOut}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  color: '#b0b0b0',
-                  font: 'inherit',
-                  cursor: loggingOut ? 'wait' : 'pointer',
-                }}
+                className="logout-button"
               >
                 {loggingOut ? 'Logging out...' : 'Log Out'}
               </button>
@@ -70,13 +127,25 @@ export default function RootLayout() {
           )}
         </nav>
       </header>
+
+      <div className={`connection-status ${isOnline ? 'is-online' : 'is-offline'}`} role="status">
+        {isOnline ? 'Online' : 'Offline — saved public catalog remains available'}
+      </div>
+
+      {updateAvailable && (
+        <div className="update-notice" role="status">
+          <span>A new version is ready.</span>
+          <button type="button" onClick={handleUpdate}>Update now</button>
+        </div>
+      )}
+
       {logoutError && (
-        <p role="alert" style={{ color: '#f87171', textAlign: 'right', margin: '8px 24px 0' }}>
+        <p role="alert" className="logout-error">
           {logoutError}
         </p>
       )}
 
-      <main style={{ padding: '24px' }}>
+      <main className="app-main">
         <Outlet />
       </main>
     </div>

@@ -1,31 +1,45 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { fetchComponents } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { fetchComponentDetails } from '../services/api';
+import { useAuth } from '../context/useAuth';
 
 export function ItemDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [itemResult, setItemResult] = useState({ key: null, item: null, error: null });
+  const [itemResult, setItemResult] = useState({
+    key: null,
+    item: null,
+    error: null,
+    isCached: false,
+  });
   const { currentUser } = useAuth();
   const userId = currentUser?.uid;
   const queryKey = `${userId || 'guest'}:${id}`;
   const loading = itemResult.key !== queryKey;
   const item = loading ? null : itemResult.item;
   const error = loading ? null : itemResult.error;
+  const isCached = !loading && itemResult.isCached;
 
   useEffect(() => {
     let ignore = false;
 
-    fetchComponents(userId)
-      .then((data) => {
+    fetchComponentDetails(id, userId)
+      .then(({ item: found, isCached: usingCache }) => {
         if (!ignore) {
-          const found = data.find((comp) => String(comp.id) === String(id));
-
           if (found) {
-            setItemResult({ key: queryKey, item: found, error: null });
+            setItemResult({
+              key: queryKey,
+              item: found,
+              error: null,
+              isCached: usingCache,
+            });
           } else {
-            setItemResult({ key: queryKey, item: null, error: 'Item not found.' });
+            setItemResult({
+              key: queryKey,
+              item: null,
+              error: 'Item not found.',
+              isCached: usingCache,
+            });
           }
         }
       })
@@ -35,6 +49,7 @@ export function ItemDetails() {
             key: queryKey,
             item: null,
             error: err.message || 'Failed to fetch item details',
+            isCached: false,
           });
         }
       });
@@ -61,7 +76,12 @@ export function ItemDetails() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto', color: '#fff' }}>
+    <div className="item-detail-page" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto', color: '#fff' }}>
+      {isCached && (
+        <p className="cached-data-notice" role="status">
+          Showing saved public component details.
+        </p>
+      )}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
         <button 
           onClick={() => navigate(-1)}
@@ -83,7 +103,7 @@ export function ItemDetails() {
         </span>
         <h1 style={{ fontSize: '24px', margin: '12px 0 16px 0' }}>{item.name}</h1>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px', color: '#d1d5db' }}>
+        <div className="item-detail-specs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px', color: '#d1d5db' }}>
           <p><strong>Price:</strong> ${item.price ?? 'N/A'}</p>
           <p><strong>TDP / Power:</strong> {item.tdp ? `${item.tdp}W` : 'N/A'}</p>
           <p><strong>Socket / Compatibility:</strong> {item.socket || item.memoryType || 'N/A'}</p>

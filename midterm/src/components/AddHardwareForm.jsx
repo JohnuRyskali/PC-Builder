@@ -62,8 +62,8 @@ export function AddHardwareForm({ onAdd, onClose }) {
   };
 
   return (
-    <div style={styles.overlay}>
-      <form onSubmit={handleSubmit} style={styles.form}>
+    <div className="add-hardware-overlay" style={styles.overlay}>
+      <form className="add-hardware-form" onSubmit={handleSubmit} style={styles.form}>
         <h3 style={styles.title}>➕ Add Custom Hardware</h3>
         {submissionError && <div role="alert" style={{ color: '#f87171' }}>{submissionError}</div>}
 
@@ -207,7 +207,7 @@ export function AddHardwareForm({ onAdd, onClose }) {
         )}
 
         {/* Action Buttons */}
-        <div style={styles.actions}>
+        <div className="add-hardware-actions" style={styles.actions}>
           {onClose && (
             <button 
               type="button" 

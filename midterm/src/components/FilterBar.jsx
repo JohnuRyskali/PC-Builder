@@ -1,5 +1,3 @@
-import React from 'react';
-
 const categories = ['All', 'CPU', 'Motherboard', 'Memory', 'Video Card'];
 
 export const FilterBar = ({
@@ -11,7 +9,7 @@ export const FilterBar = ({
   onSortChange
 }) => {
   return (
-    <div style={styles.container}>
+    <div className="filter-bar" style={styles.container}>
       <input
         type="text"
         placeholder="Search components..."

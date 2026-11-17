@@ -20,7 +20,7 @@ export const HardwareCard = ({ item, onAddToBuild }) => {
   const badgeColor = getBadgeColor(item.category);
 
   return (
-    <div style={styles.card}>
+    <div className="hardware-card" style={styles.card}>
       <div style={styles.header}>
         <span style={{ ...styles.badge, backgroundColor: badgeColor }}>
           {item.category}
@@ -40,7 +40,7 @@ export const HardwareCard = ({ item, onAddToBuild }) => {
         {item.vram && <div>🎮 VRAM: <b>{item.vram} GB</b></div>}
       </div>
 
-      <div style={styles.actions}>
+      <div className="hardware-card-actions" style={styles.actions}>
         <Link
           to={`/items/${encodeURIComponent(String(item.id))}`}
           style={{ ...styles.detailsBtn, textDecoration: 'none', textAlign: 'center' }}

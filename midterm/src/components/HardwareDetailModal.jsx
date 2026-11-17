@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const HardwareDetailModal = ({ item, onClose, onAddToBuild }) => {
   const getBadgeColor = (category) => {

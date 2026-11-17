@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function BuildSummary({ build, onRemove, onClear }) {
   const cpu = build['CPU'] || build['cpu'];
   const motherboard = build['Motherboard'] || build['motherboard'];
@@ -90,12 +88,7 @@ export function BuildSummary({ build, onRemove, onClear }) {
       </h2>
 
       {}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '10px',
-        marginBottom: '12px'
-      }}>
+      <div className="build-slots">
         {[
           { label: 'CPU', item: cpu, key: 'CPU', type: 'CPU' },
           { label: 'Motherboard', item: motherboard, key: 'Motherboard', type: 'Motherboard' },

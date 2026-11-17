@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { fetchComponents, addComponentToCatalog } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { EMPTY_BUILD, loadUserData, saveUserBuild } from '../services/userData';
 import { HardwareCard } from '../components/HardwareCard';
 import { BuildSummary } from '../components/BuildSummary';
@@ -16,7 +16,12 @@ export function ItemsList() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [buildLoadVersion, setBuildLoadVersion] = useState(0);
-  const [catalogResult, setCatalogResult] = useState({ key: null, components: [], error: null });
+  const [catalogResult, setCatalogResult] = useState({
+    key: null,
+    components: [],
+    error: null,
+    isCached: false,
+  });
   const [buildData, setBuildData] = useState({ owner: null, value: { ...EMPTY_BUILD } });
   const [buildErrorState, setBuildErrorState] = useState(null);
 
@@ -28,6 +33,7 @@ export function ItemsList() {
   const loading = catalogResult.key !== catalogKey;
   const error = loading ? null : catalogResult.error;
   const components = loading ? [] : catalogResult.components;
+  const isCached = !loading && catalogResult.isCached;
   const buildOwner = userId || null;
   const build = buildData.owner === buildOwner ? buildData.value : EMPTY_BUILD;
   const buildError = buildErrorState?.owner === buildOwner ? buildErrorState.message : '';
@@ -118,14 +124,24 @@ export function ItemsList() {
   useEffect(() => {
     let ignore = false;
     fetchComponents(userId)
-      .then((data) => {
+      .then(({ components: data, isCached: usingCache }) => {
         if (!ignore) {
-          setCatalogResult({ key: catalogKey, components: data, error: null });
+          setCatalogResult({
+            key: catalogKey,
+            components: data,
+            error: null,
+            isCached: usingCache,
+          });
         }
       })
       .catch((err) => {
         if (!ignore) {
-          setCatalogResult({ key: catalogKey, components: [], error: err.message || 'Failed to fetch catalog' });
+          setCatalogResult({
+            key: catalogKey,
+            components: [],
+            error: err.message || 'Failed to fetch catalog',
+            isCached: false,
+          });
         }
       });
 
@@ -230,7 +246,7 @@ export function ItemsList() {
           PC Part Picker & Compatibility Checker
         </h1>
         
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="catalog-actions" style={{ display: 'flex', gap: '10px' }}>
           <button onClick={handleGoToSummary} style={{ padding: '10px 18px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             📥 Export Build (.txt)
           </button>
@@ -246,6 +262,11 @@ export function ItemsList() {
           <Link to="/login" style={{ color: '#60a5fa' }}>Sign in</Link> to sync your build and custom hardware across devices.
         </p>
       )}
+      {isCached && (
+        <p className="cached-data-notice" role="status">
+          Showing the saved public catalog. Custom hardware and Firebase data require a connection.
+        </p>
+      )}
       {buildError && <p role="alert" style={{ color: '#f87171' }}>{buildError}</p>}
 
       <BuildSummary build={build} onRemove={handleRemoveFromBuild} onClear={handleClearBuild} />
@@ -256,7 +277,7 @@ export function ItemsList() {
           No components found matching your criteria.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+        <div className="hardware-grid">
           {paginatedComponents.map((item) => (
             <HardwareCard key={item.id} item={item} onAddToBuild={handleAddToBuild} />
           ))}

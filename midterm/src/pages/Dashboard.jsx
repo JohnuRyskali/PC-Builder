@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchComponents } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export function Dashboard() {
-  const [catalogResult, setCatalogResult] = useState({ key: null, components: [], error: null });
+  const [catalogResult, setCatalogResult] = useState({
+    key: null,
+    components: [],
+    error: null,
+    isCached: false,
+  });
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
   const { currentUser } = useAuth();
@@ -13,14 +18,20 @@ export function Dashboard() {
   const loading = catalogResult.key !== catalogKey;
   const error = loading ? null : catalogResult.error;
   const components = loading ? [] : catalogResult.components;
+  const isCached = !loading && catalogResult.isCached;
 
   useEffect(() => {
     let ignore = false;
 
     fetchComponents(userId)
-      .then((data) => {
+      .then(({ components: data, isCached: usingCache }) => {
         if (!ignore) {
-          setCatalogResult({ key: catalogKey, components: data, error: null });
+          setCatalogResult({
+            key: catalogKey,
+            components: data,
+            error: null,
+            isCached: usingCache,
+          });
         }
       })
       .catch((err) => {
@@ -29,6 +40,7 @@ export function Dashboard() {
             key: catalogKey,
             components: [],
             error: err.message || 'Failed to load dashboard data',
+            isCached: false,
           });
         }
       });
@@ -73,6 +85,11 @@ export function Dashboard() {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto', color: '#fff' }}>
+      {isCached && (
+        <p className="cached-data-notice" role="status">
+          Dashboard statistics use the saved public catalog.
+        </p>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ fontSize: '28px', margin: 0 }}>System Dashboard & Analytics</h1>
@@ -122,7 +139,7 @@ export function Dashboard() {
       </div>
 
       {/* Data Breakdowns */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', flexWrap: 'wrap' }}>
+      <div className="dashboard-breakdowns">
         <div style={{ backgroundColor: '#1f2937', padding: '20px', borderRadius: '8px', border: '1px solid #374151' }}>
           <h3 style={{ fontSize: '18px', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #374151', paddingBottom: '8px' }}>
             Breakdown 1: Items by Category (Total Catalog)
