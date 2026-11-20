@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pc-builder-static-1246a371ac57';
+const CACHE_NAME = 'pc-builder-static-544e07dd291f';
 const PUBLIC_DATA_CACHE = 'pc-builder-public-data-v1';
 const PUBLIC_DATA_MAX_ENTRIES = 50;
 const PUBLIC_DATA_MAX_AGE = 7 * 24 * 60 * 60 * 1000;

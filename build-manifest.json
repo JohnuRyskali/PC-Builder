@@ -1,20 +1,13 @@
 {
-  "_api-DY51QVH-.js": {
-    "file": "assets/api-DY51QVH-.js",
+  "_api-DSNFUh6U.js": {
+    "file": "assets/api-DSNFUh6U.js",
     "name": "api",
-    "imports": [
-      "_userData-DkQ1NtPI.js"
-    ]
-  },
-  "_userData-DkQ1NtPI.js": {
-    "file": "assets/userData-DkQ1NtPI.js",
-    "name": "userData",
     "imports": [
       "index.html"
     ]
   },
   "index.html": {
-    "file": "assets/index-DmIDQexR.js",
+    "file": "assets/index-DBQvO6md.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -32,11 +25,11 @@
       "src/pages/Offline.jsx"
     ],
     "css": [
-      "assets/index-BexGO57R.css"
+      "assets/index-DMSVarfX.css"
     ]
   },
   "src/pages/About.jsx": {
-    "file": "assets/About-C5iE4QOG.js",
+    "file": "assets/About-D5B0ICQg.js",
     "name": "About",
     "src": "src/pages/About.jsx",
     "isDynamicEntry": true,
@@ -45,27 +38,26 @@
     ]
   },
   "src/pages/BuildSummaryPage.jsx": {
-    "file": "assets/BuildSummaryPage-BzPrY0V7.js",
+    "file": "assets/BuildSummaryPage-BZ_GbeMr.js",
     "name": "BuildSummaryPage",
     "src": "src/pages/BuildSummaryPage.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "index.html",
-      "_userData-DkQ1NtPI.js"
+      "index.html"
     ]
   },
   "src/pages/Dashboard.jsx": {
-    "file": "assets/Dashboard-Jb5_UruO.js",
+    "file": "assets/Dashboard-CXL-7Y6p.js",
     "name": "Dashboard",
     "src": "src/pages/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_api-DY51QVH-.js"
+      "_api-DSNFUh6U.js"
     ]
   },
   "src/pages/Home.jsx": {
-    "file": "assets/Home-BNgGSVJ8.js",
+    "file": "assets/Home-Olb_E5es.js",
     "name": "Home",
     "src": "src/pages/Home.jsx",
     "isDynamicEntry": true,
@@ -74,28 +66,27 @@
     ]
   },
   "src/pages/ItemDetails.jsx": {
-    "file": "assets/ItemDetails-COc2p5u3.js",
+    "file": "assets/ItemDetails-zG31z6R0.js",
     "name": "ItemDetails",
     "src": "src/pages/ItemDetails.jsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_api-DY51QVH-.js"
+      "_api-DSNFUh6U.js"
     ]
   },
   "src/pages/ItemsList.jsx": {
-    "file": "assets/ItemsList-DjU0lRjM.js",
+    "file": "assets/ItemsList-Bd3C57vB.js",
     "name": "ItemsList",
     "src": "src/pages/ItemsList.jsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_userData-DkQ1NtPI.js",
-      "_api-DY51QVH-.js"
+      "_api-DSNFUh6U.js"
     ]
   },
   "src/pages/Login.jsx": {
-    "file": "assets/Login-OkQULyZp.js",
+    "file": "assets/Login-mHSJpQp4.js",
     "name": "Login",
     "src": "src/pages/Login.jsx",
     "isDynamicEntry": true,
@@ -104,7 +95,7 @@
     ]
   },
   "src/pages/NotFound.jsx": {
-    "file": "assets/NotFound-Cyhqqiq9.js",
+    "file": "assets/NotFound-BkMjNrO_.js",
     "name": "NotFound",
     "src": "src/pages/NotFound.jsx",
     "isDynamicEntry": true,
@@ -113,7 +104,7 @@
     ]
   },
   "src/pages/Offline.jsx": {
-    "file": "assets/Offline-DrmWDfR4.js",
+    "file": "assets/Offline-mhlLgap5.js",
     "name": "Offline",
     "src": "src/pages/Offline.jsx",
     "isDynamicEntry": true,
@@ -122,7 +113,7 @@
     ]
   },
   "src/pages/Profile.jsx": {
-    "file": "assets/Profile-BlgTY0gx.js",
+    "file": "assets/Profile-Dj7gj0Wc.js",
     "name": "Profile",
     "src": "src/pages/Profile.jsx",
     "isDynamicEntry": true,
@@ -131,7 +122,7 @@
     ]
   },
   "src/pages/Signup.jsx": {
-    "file": "assets/Signup-Bo70xZxy.js",
+    "file": "assets/Signup-DSKYqyci.js",
     "name": "Signup",
     "src": "src/pages/Signup.jsx",
     "isDynamicEntry": true,
