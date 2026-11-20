@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { fetchComponents, addComponentToCatalog } from '../services/api';
 import { useAuth } from '../context/useAuth';
-import { EMPTY_BUILD, loadUserData, saveUserBuild } from '../services/userData';
+import {
+  EMPTY_BUILD,
+  loadUserData,
+  readLocalBuild,
+  writeLocalBuild,
+} from '../services/userData';
 import { HardwareCard } from '../components/HardwareCard';
 import { BuildSummary } from '../components/BuildSummary';
 import { FilterBar } from '../components/FilterBar';
@@ -16,13 +21,17 @@ export function ItemsList() {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [catalogVersion, setCatalogVersion] = useState(0);
   const [buildLoadVersion, setBuildLoadVersion] = useState(0);
+  const [onlineVersion, setOnlineVersion] = useState(0);
   const [catalogResult, setCatalogResult] = useState({
     key: null,
     components: [],
     error: null,
     isCached: false,
   });
-  const [buildData, setBuildData] = useState({ owner: null, value: { ...EMPTY_BUILD } });
+  const [buildData, setBuildData] = useState({
+    owner: null,
+    value: { ...EMPTY_BUILD },
+  });
   const [buildErrorState, setBuildErrorState] = useState(null);
 
   const navigate = useNavigate();
@@ -37,6 +46,16 @@ export function ItemsList() {
   const buildOwner = userId || null;
   const build = buildData.owner === buildOwner ? buildData.value : EMPTY_BUILD;
   const buildError = buildErrorState?.owner === buildOwner ? buildErrorState.message : '';
+
+  useEffect(() => {
+    const retryBuildLoad = () => setOnlineVersion((version) => version + 1);
+    window.addEventListener('online', retryBuildLoad);
+    window.addEventListener('offline', retryBuildLoad);
+    return () => {
+      window.removeEventListener('online', retryBuildLoad);
+      window.removeEventListener('offline', retryBuildLoad);
+    };
+  }, []);
 
   const handleGoToSummary = () => {
     const hasItems = Object.values(build).some((item) => item !== null);
@@ -80,46 +99,72 @@ export function ItemsList() {
 
   useEffect(() => {
     let ignore = false;
-    if (!userId) return () => { ignore = true; };
+    const localBuild = readLocalBuild(userId);
+
+    if (localBuild?.pending || !userId || !navigator.onLine) {
+      Promise.resolve().then(() => {
+        if (ignore) return;
+        setBuildErrorState((previous) => previous?.owner === (userId || null) ? null : previous);
+        setBuildData({
+          owner: userId || null,
+          value: { ...EMPTY_BUILD, ...(localBuild?.build || {}) },
+        });
+      });
+      return () => { ignore = true; };
+    }
 
     loadUserData(userId)
       .then(({ build: savedBuild }) => {
         if (!ignore) {
-          setBuildData({ owner: userId, value: { ...EMPTY_BUILD, ...savedBuild } });
+          const normalizedBuild = { ...EMPTY_BUILD, ...savedBuild };
+          try {
+            writeLocalBuild(userId, normalizedBuild);
+          } catch (error) {
+            console.error('Failed to save a local copy of the build:', error);
+          }
+          setBuildErrorState((previous) => previous?.owner === userId ? null : previous);
+          setBuildData({ owner: userId, value: normalizedBuild });
         }
       })
       .catch((err) => {
         if (!ignore) {
           console.error('Failed to load saved build:', err);
-          setBuildErrorState({
-            owner: userId,
-            message: 'Could not load your saved data. Check your Firebase configuration and try again.',
-          });
+          if (localBuild) {
+            setBuildData({
+              owner: userId,
+              value: { ...EMPTY_BUILD, ...localBuild.build },
+            });
+            setBuildErrorState({
+              owner: userId,
+              message: 'Could not load your cloud build. Showing the saved copy from this device.',
+            });
+          } else {
+            setBuildErrorState({
+              owner: userId,
+              message: 'Could not load your saved data. Check your Firebase configuration and try again.',
+            });
+          }
         }
       });
 
     return () => { ignore = true; };
-  }, [userId, buildLoadVersion]);
+  }, [userId, buildLoadVersion, onlineVersion]);
 
-  useEffect(() => {
-    if (!userId || buildData.owner !== userId) return undefined;
-
-    const timeout = setTimeout(() => {
-      saveUserBuild(userId, buildData.value)
-        .then(() => {
-          setBuildErrorState((previous) => previous?.owner === userId ? null : previous);
-        })
-        .catch((err) => {
-          console.error('Failed to save build:', err);
-          setBuildErrorState({
-            owner: userId,
-            message: 'Could not save your build to Firebase. Please try again.',
-          });
-        });
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [buildData, userId]);
+  const persistBuild = (owner, value) => {
+    try {
+      writeLocalBuild(owner, value, Boolean(userId));
+      setBuildErrorState((previous) => previous?.owner === owner ? null : previous);
+      window.dispatchEvent(new CustomEvent('pwa:build-updated', {
+        detail: { userId: userId || null },
+      }));
+    } catch (storageError) {
+      console.error('Failed to save the build on this device:', storageError);
+      setBuildErrorState({
+        owner,
+        message: 'Could not save your build on this device. Check the browser storage settings.',
+      });
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -151,11 +196,11 @@ export function ItemsList() {
   const updateBuild = (updater) => {
     if (userId && buildData.owner !== userId) return;
 
-    setBuildData((previous) => {
-      const owner = userId || null;
-      const previousBuild = previous.owner === owner ? previous.value : EMPTY_BUILD;
-      return { owner, value: updater(previousBuild) };
-    });
+    const owner = userId || null;
+    const previousBuild = buildData.owner === owner ? buildData.value : EMPTY_BUILD;
+    const nextBuild = updater(previousBuild);
+    setBuildData({ owner, value: nextBuild });
+    persistBuild(owner, nextBuild);
   };
 
   const handleAddToBuild = (item) => {

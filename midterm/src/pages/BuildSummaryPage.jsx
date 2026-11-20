@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import { EMPTY_BUILD, loadUserData } from '../services/userData';
+import {
+  EMPTY_BUILD,
+  loadUserData,
+  readLocalBuild,
+  writeLocalBuild,
+} from '../services/userData';
 
 export default function BuildSummaryPage() {
   const navigate = useNavigate();
@@ -11,7 +16,11 @@ export default function BuildSummaryPage() {
   const routeBuild = location.state?.owner === (userId || null)
     ? location.state?.build
     : null;
-  const [savedBuild, setSavedBuild] = useState({ owner: null, value: { ...EMPTY_BUILD }, error: '' });
+  const [savedBuild, setSavedBuild] = useState(() => ({
+    owner: null,
+    value: { ...EMPTY_BUILD, ...(readLocalBuild(null)?.build || {}) },
+    error: '',
+  }));
   const hasSavedBuild = savedBuild.owner === (userId || null);
   const build = routeBuild
     ? { ...EMPTY_BUILD, ...routeBuild }
@@ -24,20 +33,45 @@ export default function BuildSummaryPage() {
 
     if (!userId || routeBuild) return () => { ignore = true; };
 
+    const localBuild = readLocalBuild(userId);
+    if (localBuild?.pending || !navigator.onLine) {
+      Promise.resolve().then(() => {
+        if (ignore) return;
+        setSavedBuild({
+          owner: userId,
+          value: { ...EMPTY_BUILD, ...(localBuild?.build || {}) },
+          error: '',
+        });
+      });
+      return () => { ignore = true; };
+    }
+
     loadUserData(userId)
       .then(({ build: savedBuild }) => {
         if (!ignore) {
-          setSavedBuild({ owner: userId, value: { ...EMPTY_BUILD, ...savedBuild }, error: '' });
+          const normalizedBuild = { ...EMPTY_BUILD, ...savedBuild };
+          try {
+            writeLocalBuild(userId, normalizedBuild);
+          } catch (storageError) {
+            console.error('Failed to save a local copy of the build:', storageError);
+          }
+          setSavedBuild({ owner: userId, value: normalizedBuild, error: '' });
         }
       })
       .catch((loadError) => {
         if (!ignore) {
           console.error('Failed to load saved build:', loadError);
-          setSavedBuild({
-            owner: userId,
-            value: { ...EMPTY_BUILD },
-            error: 'Could not load your saved build from Firebase.',
-          });
+          setSavedBuild(localBuild
+            ? {
+                owner: userId,
+                value: { ...EMPTY_BUILD, ...localBuild.build },
+                error: 'Could not reach Firebase. Showing the saved copy from this device.',
+              }
+            : {
+                owner: userId,
+                value: { ...EMPTY_BUILD },
+                error: 'Could not load your saved build from Firebase.',
+              });
         }
       });
 
@@ -90,7 +124,7 @@ export default function BuildSummaryPage() {
       {error && <p role="alert" style={{ color: '#f87171' }}>{error}</p>}
       {!userId && !routeBuild && (
         <p style={{ color: '#9ca3af' }}>
-          This build is not saved. <Link to="/login" style={{ color: '#60a5fa' }}>Sign in</Link> to sync builds across devices.
+          This build is saved on this device. <Link to="/login" style={{ color: '#60a5fa' }}>Sign in</Link> to sync builds across devices.
         </p>
       )}
       

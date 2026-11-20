@@ -124,6 +124,7 @@ button {
 
 .connection-status,
 .update-notice,
+.build-sync-status,
 .logout-error {
   padding: 8px clamp(14px, 3vw, 32px);
   font-size: 14px;
@@ -137,6 +138,30 @@ button {
 .connection-status.is-offline {
   color: #fde68a;
   background: #3b2e0d;
+}
+
+.build-sync-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #bfdbfe;
+  background: #172554;
+}
+
+.build-sync-status.has-error {
+  color: #fecaca;
+  background: #450a0a;
+}
+
+.build-sync-status button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: #2563eb;
+  color: #fff;
 }
 
 .update-notice {

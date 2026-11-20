@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import { readLocalBuild, syncPendingBuild } from '../services/userData';
 
 export default function RootLayout() {
   const { currentUser, logout } = useAuth();
@@ -9,6 +10,8 @@ export default function RootLayout() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(() => Boolean(window.pwaUpdateAvailable));
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [buildSyncMessage, setBuildSyncMessage] = useState('');
+  const [buildSyncError, setBuildSyncError] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -33,6 +36,69 @@ export default function RootLayout() {
       window.removeEventListener('offline', onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const userId = currentUser?.uid;
+
+    const syncBuild = async (targetUserId) => {
+      if (!targetUserId) {
+        if (!userId) {
+          setBuildSyncError(false);
+          setBuildSyncMessage('Build saved on this device. Sign in to sync it across devices.');
+        }
+        return;
+      }
+      if (targetUserId !== userId) return;
+
+      const localBuild = readLocalBuild(targetUserId);
+      if (!localBuild?.pending) return;
+      if (!navigator.onLine) {
+        setBuildSyncError(false);
+        setBuildSyncMessage('Offline: your build is saved here and will sync when connection returns.');
+        return;
+      }
+
+      setBuildSyncError(false);
+      setBuildSyncMessage('Syncing your build to your account...');
+      try {
+        await syncPendingBuild(targetUserId);
+        if (!ignore) {
+          setBuildSyncError(false);
+          setBuildSyncMessage('Your build is synced with your account.');
+        }
+      } catch (error) {
+        console.error('Failed to sync the locally saved build:', error);
+        if (!ignore) {
+          setBuildSyncError(true);
+          setBuildSyncMessage('Build remains saved on this device. Sync failed; try again when online.');
+        }
+      }
+    };
+
+    const handleBuildUpdated = (event) => {
+      syncBuild(event.detail?.userId || null);
+    };
+    const handleOnline = () => syncBuild(userId);
+    const handleOffline = () => {
+      if (userId && readLocalBuild(userId)?.pending) {
+        setBuildSyncError(false);
+        setBuildSyncMessage('Offline: your build is saved here and will sync when connection returns.');
+      }
+    };
+
+    window.addEventListener('pwa:build-updated', handleBuildUpdated);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (userId) syncBuild(userId);
+
+    return () => {
+      ignore = true;
+      window.removeEventListener('pwa:build-updated', handleBuildUpdated);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [currentUser?.uid]);
 
   const handleInstall = async () => {
     if (!installPrompt) return;
@@ -131,6 +197,22 @@ export default function RootLayout() {
       <div className={`connection-status ${isOnline ? 'is-online' : 'is-offline'}`} role="status">
         {isOnline ? 'Online' : 'Offline — saved public catalog remains available'}
       </div>
+
+      {buildSyncMessage && (
+        <div className={`build-sync-status${buildSyncError ? ' has-error' : ''}`} role="status">
+          <span>{buildSyncMessage}</span>
+          {buildSyncError && currentUser && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('pwa:build-updated', {
+                detail: { userId: currentUser.uid },
+              }))}
+            >
+              Retry sync
+            </button>
+          )}
+        </div>
+      )}
 
       {updateAvailable && (
         <div className="update-notice" role="status">

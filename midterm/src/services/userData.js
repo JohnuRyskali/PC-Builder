@@ -11,6 +11,7 @@ import { db } from './firebase';
 
 const LEGACY_BUILD_KEY = 'pc_builder_current_build';
 const LEGACY_CUSTOM_ITEMS_KEY = 'pc_builder_custom_components';
+const LOCAL_BUILD_PREFIX = 'pc_builder_offline_build';
 
 export const EMPTY_BUILD = {
   CPU: null,
@@ -20,6 +21,72 @@ export const EMPTY_BUILD = {
 };
 
 const pendingLoads = new Map();
+const pendingBuildSyncs = new Map();
+
+function localBuildKey(uid) {
+  return `${LOCAL_BUILD_PREFIX}:${uid || 'guest'}`;
+}
+
+export function readLocalBuild(uid) {
+  try {
+    const saved = localStorage.getItem(localBuildKey(uid));
+    if (!saved) return null;
+
+    const record = JSON.parse(saved);
+    if (!record || !record.build || typeof record.build !== 'object') return null;
+
+    return {
+      build: { ...EMPTY_BUILD, ...record.build },
+      pending: record.pending === true,
+      revision: Number(record.revision) || 0,
+    };
+  } catch (error) {
+    console.error('Failed to read the locally saved build:', error);
+    return null;
+  }
+}
+
+export function writeLocalBuild(uid, build, pending = false) {
+  const previous = readLocalBuild(uid);
+  const record = {
+    build: { ...EMPTY_BUILD, ...build },
+    pending,
+    revision: (previous?.revision || 0) + 1,
+  };
+  localStorage.setItem(localBuildKey(uid), JSON.stringify(record));
+  return record;
+}
+
+export function syncPendingBuild(uid) {
+  if (!uid || !navigator.onLine) return Promise.resolve(false);
+
+  const existingSync = pendingBuildSyncs.get(uid);
+  if (existingSync) return existingSync;
+
+  const sync = (async () => {
+    let synced = false;
+    let record = readLocalBuild(uid);
+
+    while (navigator.onLine && record?.pending) {
+      await saveUserBuild(uid, record.build);
+      synced = true;
+
+      const latestRecord = readLocalBuild(uid);
+      if (latestRecord?.revision === record.revision && latestRecord.pending) {
+        writeLocalBuild(uid, latestRecord.build, false);
+      }
+
+      record = readLocalBuild(uid);
+    }
+
+    return synced;
+  })().finally(() => {
+    pendingBuildSyncs.delete(uid);
+  });
+
+  pendingBuildSyncs.set(uid, sync);
+  return sync;
+}
 
 function readLegacyValue(key) {
   const saved = localStorage.getItem(key);
